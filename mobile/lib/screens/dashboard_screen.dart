@@ -158,6 +158,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          // Notification Nudges Button
+          IconButton(
+            tooltip: "Daily Nudges & Reminders",
+            onPressed: _showProfile,
+            icon: const Icon(Icons.notifications_active_outlined, color: Color(0xFF238B55), size: 22),
+          ),
           // User Avatar Button
           IconButton(
             onPressed: _showProfile,
