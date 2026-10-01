@@ -1,171 +1,235 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
 const db = require('./db.js');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json({ limit: '5mb' }));
+// Content types dictionary for static files
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
+};
 
-// Auth Middleware
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const secretKey = req.headers['x-secret-key'] 
-    || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null)
-    || req.query.key;
-
-  if (!secretKey) {
-    return res.status(401).json({ success: false, error: 'Authentication required. Missing Secret Key.' });
-  }
-
-  try {
-    const user = db.getUserBySecretKey(secretKey);
-    if (!user) {
-      return res.status(401).json({ success: false, error: 'Invalid or expired Secret Key.' });
-    }
-    req.user = user;
-    next();
-  } catch (err) {
-    return res.status(500).json({ success: false, error: 'Auth check failed: ' + err.message });
-  }
+// Helper: Parse incoming JSON request body
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      if (!body.trim()) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(new Error('Invalid JSON body: ' + err.message));
+      }
+    });
+    req.on('error', reject);
+  });
 }
 
-// Public Auth Endpoints
-app.post('/api/auth/register', (req, res) => {
-  try {
-    const { name, secretKey, startDate, initialWeight, targetWeight } = req.body;
-    if (!name || !secretKey || !startDate) {
-      return res.status(400).json({ success: false, error: 'Please provide name, secretKey, and startDate.' });
+// Helper: Send JSON response
+function sendJson(res, statusCode, data, headers = {}) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, x-secret-key, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    ...headers
+  });
+  res.end(JSON.stringify(data));
+}
+
+// Helper: Resolve authenticated user from request
+function getAuthUser(req, searchParams) {
+  const authHeader = req.headers['authorization'];
+  const secretKey = req.headers['x-secret-key']
+    || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null)
+    || searchParams.get('key');
+
+  if (!secretKey) return null;
+  return db.getUserBySecretKey(secretKey);
+}
+
+// Helper: Serve static file
+function serveStaticFile(res, filePath) {
+  fs.stat(filePath, (err, stats) => {
+    if (err || !stats.isFile()) {
+      // Fallback to index.html for Single Page App routing
+      const indexPath = path.join(__dirname, 'index.html');
+      fs.readFile(indexPath, (indexErr, data) => {
+        if (indexErr) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('404 Not Found');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(data);
+      });
+      return;
     }
 
-    const result = db.registerUser({ name, secretKey, startDate, initialWeight, targetWeight });
-    res.status(201).json({ success: true, ...result });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    fs.createReadStream(filePath).pipe(res);
+  });
+}
 
-app.post('/api/auth/login', (req, res) => {
-  try {
-    const { secretKey } = req.body;
-    if (!secretKey) {
-      return res.status(400).json({ success: false, error: 'Secret Key is required.' });
+// Main HTTP Server
+const server = http.createServer(async (req, res) => {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, x-secret-key, Authorization',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+    });
+    res.end();
+    return;
+  }
+
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = parsedUrl.pathname;
+  const searchParams = parsedUrl.searchParams;
+
+  // --- API ROUTES ---
+
+  // Health Check
+  if (req.method === 'GET' && pathname === '/api/health') {
+    return sendJson(res, 200, { status: 'ok', serverTime: new Date().toISOString() });
+  }
+
+  // Register User (Onboarding)
+  if (req.method === 'POST' && pathname === '/api/auth/register') {
+    try {
+      const body = await parseJsonBody(req);
+      const { name, secretKey, startDate, initialWeight, targetWeight } = body;
+      if (!name || !secretKey || !startDate) {
+        return sendJson(res, 400, { success: false, error: 'Please provide name, secretKey, and startDate.' });
+      }
+      const result = db.registerUser({ name, secretKey, startDate, initialWeight, targetWeight });
+      return sendJson(res, 201, { success: true, ...result });
+    } catch (err) {
+      return sendJson(res, 400, { success: false, error: err.message });
+    }
+  }
+
+  // Login User
+  if (req.method === 'POST' && pathname === '/api/auth/login') {
+    try {
+      const body = await parseJsonBody(req);
+      const { secretKey } = body;
+      if (!secretKey) {
+        return sendJson(res, 400, { success: false, error: 'Secret Key is required.' });
+      }
+      const result = db.loginUser(secretKey);
+      return sendJson(res, 200, { success: true, ...result });
+    } catch (err) {
+      return sendJson(res, 401, { success: false, error: err.message });
+    }
+  }
+
+  // Authenticated APIs
+  if (pathname.startsWith('/api/user/')) {
+    const user = getAuthUser(req, searchParams);
+    if (!user) {
+      return sendJson(res, 401, { success: false, error: 'Authentication required. Invalid or missing Secret Key.' });
     }
 
-    const result = db.loginUser(secretKey);
-    res.json({ success: true, ...result });
-  } catch (err) {
-    res.status(401).json({ success: false, error: err.message });
-  }
-});
+    try {
+      if (req.method === 'GET' && pathname === '/api/user/me') {
+        const data = db.formatUserData(user);
+        return sendJson(res, 200, { success: true, ...data });
+      }
 
-// Protected User Data Endpoints
-app.get('/api/user/me', authMiddleware, (req, res) => {
-  try {
-    const data = db.formatUserData(req.user);
-    res.json({ success: true, ...data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+      if (req.method === 'POST' && pathname === '/api/user/toggle-task') {
+        const body = await parseJsonBody(req);
+        const { dayNumber, taskIndex, completed } = body;
+        if (dayNumber === undefined || taskIndex === undefined) {
+          return sendJson(res, 400, { success: false, error: 'dayNumber and taskIndex required.' });
+        }
+        db.toggleTask(user.id, dayNumber, taskIndex, completed);
+        return sendJson(res, 200, { success: true, dayNumber, taskIndex, completed });
+      }
 
-app.post('/api/user/toggle-task', authMiddleware, (req, res) => {
-  try {
-    const { dayNumber, taskIndex, completed } = req.body;
-    if (dayNumber === undefined || taskIndex === undefined) {
-      return res.status(400).json({ success: false, error: 'dayNumber and taskIndex required.' });
+      if (req.method === 'POST' && pathname === '/api/user/water') {
+        const body = await parseJsonBody(req);
+        const { dayNumber, glasses } = body;
+        if (dayNumber === undefined || glasses === undefined) {
+          return sendJson(res, 400, { success: false, error: 'dayNumber and glasses required.' });
+        }
+        db.updateWater(user.id, dayNumber, glasses);
+        return sendJson(res, 200, { success: true, dayNumber, glasses });
+      }
+
+      if (req.method === 'POST' && pathname === '/api/user/weight') {
+        const body = await parseJsonBody(req);
+        const { logDate, weight } = body;
+        if (!logDate || weight === undefined) {
+          return sendJson(res, 400, { success: false, error: 'logDate and weight required.' });
+        }
+        db.logWeight(user.id, logDate, weight);
+        return sendJson(res, 200, { success: true, logDate, weight });
+      }
+
+      if (req.method === 'POST' && pathname === '/api/user/sync-all') {
+        const body = await parseJsonBody(req);
+        const { done, water, wts } = body;
+        const result = db.syncAll(user.id, { done, water, wts });
+        return sendJson(res, 200, { success: true, ...result });
+      }
+
+      if (req.method === 'GET' && pathname === '/api/user/export') {
+        const data = db.formatUserData(user);
+        const fileName = `fatloss_backup_${user.name.replace(/\s+/g, '_')}.json`;
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify(data, null, 2));
+        return;
+      }
+    } catch (err) {
+      return sendJson(res, 500, { success: false, error: err.message });
     }
-
-    db.toggleTask(req.user.id, dayNumber, taskIndex, completed);
-    res.json({ success: true, dayNumber, taskIndex, completed });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
   }
-});
 
-app.post('/api/user/water', authMiddleware, (req, res) => {
-  try {
-    const { dayNumber, glasses } = req.body;
-    if (dayNumber === undefined || glasses === undefined) {
-      return res.status(400).json({ success: false, error: 'dayNumber and glasses required.' });
-    }
-
-    db.updateWater(req.user.id, dayNumber, glasses);
-    res.json({ success: true, dayNumber, glasses });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+  // --- STATIC FILES ---
+  let safePath = path.normalize(decodeURIComponent(pathname)).replace(/^(\.\.[\/\\])+/, '');
+  if (safePath === '/' || safePath === '') {
+    safePath = '/index.html';
   }
+  const filePath = path.join(__dirname, safePath);
+  serveStaticFile(res, filePath);
 });
 
-app.post('/api/user/weight', authMiddleware, (req, res) => {
-  try {
-    const { logDate, weight } = req.body;
-    if (!logDate || weight === undefined) {
-      return res.status(400).json({ success: false, error: 'logDate and weight required.' });
-    }
-
-    db.logWeight(req.user.id, logDate, weight);
-    res.json({ success: true, logDate, weight });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.post('/api/user/sync-all', authMiddleware, (req, res) => {
-  try {
-    const { done, water, wts } = req.body;
-    const result = db.syncAll(req.user.id, { done, water, wts });
-    res.json({ success: true, ...result });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/user/export', authMiddleware, (req, res) => {
-  try {
-    const data = db.formatUserData(req.user);
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename=fatloss_backup_${req.user.name.replace(/\s+/g, '_')}.json`);
-    res.send(JSON.stringify(data, null, 2));
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', serverTime: new Date().toISOString() });
-});
-
-// Serve static frontend files
-app.use(express.static(__dirname));
-
-// Fallback to index.html for client-side routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`🚀 60-Day Fat Loss App is running locally!`);
-  console.log(`🌐 Local URL: http://localhost:${PORT}`);
-  console.log(`💾 SQLite DB: /data/fatloss.db`);
-  console.log(`======================================================\n`);
-});
+function startServer(portToUse) {
+  server.listen(portToUse, () => {
+    console.log(`\n======================================================`);
+    console.log(`🚀 Zero-Dependency Node.js Server is Running!`);
+    console.log(`🌐 Local URL: http://localhost:${portToUse}`);
+    console.log(`💾 SQLite DB: /data/fatloss.db`);
+    console.log(`⚡ Native HTTP + node:sqlite (Zero npm packages needed)`);
+    console.log(`======================================================\n`);
+  });
+}
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    const fallbackPort = Number(PORT) + 1;
-    console.log(`Port ${PORT} in use, trying port ${fallbackPort}...`);
-    app.listen(fallbackPort, () => {
-      console.log(`\n======================================================`);
-      console.log(`🚀 60-Day Fat Loss App is running locally!`);
-      console.log(`🌐 Local URL: http://localhost:${fallbackPort}`);
-      console.log(`======================================================\n`);
-    });
+    const nextPort = Number(PORT) + 1;
+    console.log(`Port ${PORT} in use, trying ${nextPort}...`);
+    startServer(nextPort);
   } else {
     console.error('Server error:', err);
   }
 });
+
+startServer(PORT);
