@@ -64,6 +64,91 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final formattedDateStr = DateFormat('EEEE, dd MMM yyyy').format(_selectedStartDate);
+
+    // Show Confirmation Dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Text("🗓️ "),
+              Expanded(
+                child: Text(
+                  "Lock Day 1 Start Date?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5931E).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5931E).withValues(alpha: 0.4)),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      "SELECTED DAY 1 START DATE",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formattedDateStr,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                "⚠️ Permanent Lock: Once you confirm, your 60-day roadmap progression will be permanently anchored to this start date.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("Change Date"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF238B55),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text("Yes, Lock & Begin"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _isLoading = true);
 
     try {
