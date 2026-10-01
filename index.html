@@ -1202,6 +1202,8 @@ $("btnGoogleLogin").onclick = async () => {
 $("btnAppleLogin").onclick = async () => {
   hideAuthError();
   const provider = new OAuthProvider('apple.com');
+  provider.addScope('email');
+  provider.addScope('name');
   try {
     await signInWithPopup(auth, provider);
   } catch (err) {
