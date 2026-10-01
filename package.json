@@ -1,16 +1,11 @@
 {
   "name": "fatloss-plan",
   "version": "1.0.0",
-  "description": "60-Day Veg Fat Loss Dashboard with Native Zero-Dependency Node.js & SQLite Backend",
-  "main": "server.js",
+  "description": "60-Day Veg Fat Loss Dashboard with Firebase Auth & Cloud Firestore",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "deploy": "firebase deploy --only hosting"
   },
-  "keywords": ["fatloss", "dashboard", "health", "fitness"],
+  "keywords": ["fatloss", "firebase", "firestore", "health", "fitness"],
   "author": "",
-  "license": "ISC",
-  "engines": {
-    "node": ">=22.0.0"
-  }
+  "license": "ISC"
 }

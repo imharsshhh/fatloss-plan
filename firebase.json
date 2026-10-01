@@ -3,14 +3,12 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      "firestore.rules",
       "**/.*",
       "**/node_modules/**",
-      "data/**",
-      "server.js",
-      "db.js",
       "package.json",
       "package-lock.json",
-      "render.yaml"
+      "README.md"
     ],
     "rewrites": [
       {
@@ -18,5 +16,8 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }
