@@ -28,7 +28,7 @@
   --red-light: #fee8e6;
   --red: #e5484d;
   --shadow: 0 4px 20px -2px rgba(15, 42, 36, 0.07);
-  --shadow-lg: 0 12px 36px -4px rgba(15, 42, 36, 0.12);
+  --shadow-lg: 0 12px 36px -4px rgba(15, 42, 36, 0.14);
   --radius: 18px;
   --radius-sm: 10px;
 }
@@ -151,8 +151,8 @@ main {
 .user-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 8px;
+  padding: 4px 12px 4px 6px;
   background: var(--leaf-light);
   color: var(--leaf);
   border: 1px solid var(--leaf);
@@ -165,6 +165,13 @@ main {
 .user-badge:hover {
   background: var(--leaf);
   color: #ffffff;
+}
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--card);
 }
 
 .nav-controls {
@@ -207,6 +214,45 @@ button:disabled {
   background: var(--leaf-hover);
   border-color: var(--leaf-hover);
   box-shadow: 0 4px 14px var(--leaf-glow);
+}
+
+/* OAuth Buttons */
+.btn-oauth {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 12px;
+}
+.btn-oauth:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--leaf);
+}
+.btn-oauth svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.btn-apple {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+.btn-apple:hover:not(:disabled) {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
 }
 
 .sync-status {
@@ -527,15 +573,12 @@ button:disabled {
 .start-date-badge b {
   color: var(--ink);
 }
-.start-date-badge .lock-icon {
-  font-size: 0.85rem;
-}
 
 /* Modal and Auth Overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 24, 20, 0.72);
+  background: rgba(10, 24, 20, 0.75);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -549,9 +592,9 @@ button:disabled {
 .modal-box {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 24px;
   width: 100%;
-  max-width: 460px;
+  max-width: 440px;
   padding: 28px 24px;
   box-shadow: var(--shadow-lg);
   position: relative;
@@ -597,46 +640,14 @@ button:disabled {
   outline: none;
   background: var(--card);
 }
-.form-hint {
-  font-size: 0.78rem;
-  color: var(--mute);
-  margin-top: 4px;
-  line-height: 1.35;
-}
 .notice-box {
   background: var(--amber-light);
   border-left: 4px solid var(--amber);
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 6px;
   font-size: 0.8rem;
   color: var(--ink);
   margin-top: 6px;
-}
-
-.auth-tabs {
-  display: flex;
-  border-bottom: 2px solid var(--line);
-  margin-bottom: 20px;
-  gap: 12px;
-}
-.auth-tab {
-  background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  padding: 8px 12px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--mute);
-  margin-bottom: -2px;
-  border-radius: 0;
-}
-.auth-tab.active {
-  color: var(--leaf);
-  border-bottom-color: var(--leaf);
-}
-.auth-tab:hover {
-  border-color: transparent;
-  transform: none;
 }
 
 .auth-error {
@@ -666,69 +677,74 @@ button:disabled {
 </head>
 <body>
 
-<!-- Onboarding & Login Auth Modal -->
+<!-- Step 1: Firebase Auth Modal (Google & Apple Sign-In) -->
 <div id="authModal" class="modal-overlay">
-  <div class="modal-box">
-    <div style="text-align:center; margin-bottom: 16px;">
-      <span style="font-size: 2.8rem; display:inline-block; margin-bottom: 4px;">🥗</span>
-      <h2 class="modal-title">60-Day Veg Fat Loss</h2>
-      <div class="modal-subtitle">Personalized nutrition & activity tracker</div>
-    </div>
-
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab active" id="tabRegister">🌟 New Member</button>
-      <button type="button" class="auth-tab" id="tabLogin">🔑 Member Login</button>
-    </div>
+  <div class="modal-box" style="text-align:center;">
+    <span style="font-size: 3rem; display:inline-block; margin-bottom: 6px;">🥗</span>
+    <h2 class="modal-title">60-Day Veg Fat Loss</h2>
+    <div class="modal-subtitle">Sign in to sync your 60-day plan across all your devices</div>
 
     <div id="authError" class="auth-error"></div>
 
-    <!-- Onboarding Form -->
-    <form id="registerForm">
+    <button type="button" class="btn-oauth" id="btnGoogleLogin">
+      <svg viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <button type="button" class="btn-oauth btn-apple" id="btnAppleLogin">
+      <svg viewBox="0 0 170 170" fill="currentColor">
+        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.34-6.3-9.56-11.08-20.73-14.34-33.51-3.26-12.78-4.89-24.81-4.89-36.1 0-14.34 3.7-26.23 11.1-35.68 7.4-9.45 16.63-14.28 27.69-14.49 4.35 0 9.29 1.15 14.82 3.46 5.53 2.31 9.4 3.52 11.61 3.63 1.74 0 5.86-1.32 12.37-3.95 6.51-2.63 12.18-3.79 17.02-3.48 13.04.87 23.36 5.87 30.97 15.02-11.52 6.96-17.18 16.52-16.98 28.69.21 9.57 3.86 17.61 10.96 24.13 7.1 6.52 15.65 10.22 25.65 11.09-2.61 8.04-5.98 16.41-10.1 25.11zM119.22 31.84c0-7.39 2.66-14.34 7.97-20.87 5.31-6.52 11.85-10.43 19.63-11.74.87 1.74 1.3 3.69 1.3 5.87 0 7.39-2.77 14.45-8.31 21.19-5.54 6.74-12.17 10.76-19.89 12.06-.22-2.17-.7-4.34-.7-6.51z"/>
+      </svg>
+      Continue with Apple
+    </button>
+
+    <p class="note" style="margin-top: 14px; font-size: 0.78rem;">
+      🔒 Your data is stored securely in your private Cloud Firestore account.
+    </p>
+  </div>
+</div>
+
+<!-- Step 2: One-Time Onboarding Modal (Start Date Setup) -->
+<div id="onboardingModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div style="text-align:center; margin-bottom: 16px;">
+      <img id="onboardUserAvatar" class="user-avatar" style="width:54px; height:54px; margin:0 auto 8px; border:2px solid var(--leaf);" src="" alt="User Avatar">
+      <h2 class="modal-title">Welcome to Your Plan!</h2>
+      <div class="modal-subtitle" id="onboardGreeting">Let's personalize your 60-day roadmap</div>
+    </div>
+
+    <form id="onboardingForm">
       <div class="form-group">
-        <label for="regName">Your Name</label>
-        <input type="text" id="regName" placeholder="e.g. Alex Morgan" required autocomplete="name">
+        <label for="onboardName">Your Display Name</label>
+        <input type="text" id="onboardName" required>
       </div>
 
       <div class="form-group">
-        <label for="regSecret">Choose a Secret Key (Passcode)</label>
-        <input type="password" id="regSecret" placeholder="e.g. mysecret2026" required autocomplete="new-password">
-        <div class="form-hint">Used as your private key to log in and protect your progress across sessions.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="regStart">Start Date of Your 60-Day Plan</label>
-        <input type="date" id="regStart" required>
+        <label for="onboardStartDate">Select Start Date for Day 1</label>
+        <input type="date" id="onboardStartDate" required>
         <div class="notice-box">
-          🔒 <strong>Start Date Lock:</strong> You can select your start date once during onboarding. It will be permanently locked afterwards to accurately map your 60-day roadmap.
+          🔒 <strong>Start Date Lock:</strong> This will be your permanent Day 1 start date to track your exact 60-day timeline across all 8 phases.
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
         <div class="form-group">
-          <label for="regWeight">Starting Weight (kg)</label>
-          <input type="number" step="0.1" id="regWeight" placeholder="e.g. 78.5">
+          <label for="onboardWeight">Start Weight (kg)</label>
+          <input type="number" step="0.1" id="onboardWeight" placeholder="e.g. 78.5">
         </div>
         <div class="form-group">
-          <label for="regTarget">Target Goal (kg)</label>
-          <input type="number" step="0.1" id="regTarget" placeholder="e.g. 72.0">
+          <label for="onboardTarget">Target Goal (kg)</label>
+          <input type="number" step="0.1" id="onboardTarget" placeholder="e.g. 72.0">
         </div>
       </div>
 
-      <button type="submit" id="btnRegisterSubmit" class="btn-primary" style="width:100%; padding:12px; font-size:1rem; margin-top:8px;">
-        🚀 Begin 60-Day Transformation
-      </button>
-    </form>
-
-    <!-- Returning User Login Form -->
-    <form id="loginForm" style="display:none;">
-      <div class="form-group">
-        <label for="loginSecret">Enter Your Secret Key</label>
-        <input type="password" id="loginSecret" placeholder="Enter your secret passcode" required autocomplete="current-password">
-        <div class="form-hint">Enter the Secret Key you created during onboarding.</div>
-      </div>
-
-      <button type="submit" id="btnLoginSubmit" class="btn-primary" style="width:100%; padding:12px; font-size:1rem; margin-top:14px;">
-        🔓 Unlock Dashboard
+      <button type="submit" id="btnOnboardSubmit" class="btn-primary" style="width:100%; padding:12px; font-size:1rem; margin-top:8px;">
+        🚀 Confirm & Start 60-Day Journey
       </button>
     </form>
   </div>
@@ -743,21 +759,20 @@ button:disabled {
     </div>
 
     <div style="background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:16px;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-        <span class="note">Name</span>
-        <b id="profName">-</b>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <img id="profAvatar" class="user-avatar" style="width:42px; height:42px;" src="" alt="Avatar">
+        <div>
+          <b id="profName" style="display:block; font-size:1.05rem;">-</b>
+          <span id="profEmail" class="note">-</span>
+        </div>
       </div>
       <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-        <span class="note">Start Date</span>
+        <span class="note">Start Date (Fixed)</span>
         <b id="profStart">-</b>
       </div>
       <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-        <span class="note">Storage</span>
-        <b style="color:var(--leaf);">Local SQLite Database</b>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="note">Secret Key</span>
-        <button id="btnCopyKey" style="font-size:0.75rem; padding:3px 8px;">📋 Copy Key</button>
+        <span class="note">Cloud Database</span>
+        <b style="color:var(--leaf);">Google Cloud Firestore</b>
       </div>
     </div>
 
@@ -766,7 +781,7 @@ button:disabled {
         💾 Download JSON Backup
       </button>
       <button id="btnLogout" style="width:100%; padding:10px; color:var(--red); border-color:var(--red); display:flex; align-items:center; justify-content:center; gap:6px;">
-        🚪 Log Out / Switch Member
+        🚪 Sign Out
       </button>
     </div>
   </div>
@@ -779,12 +794,13 @@ button:disabled {
     <div class="brand">
       <h1>🥗 60-Day Veg Fat Loss</h1>
       <div class="user-badge" id="userBadge" title="Click to view profile & settings">
-        <span>👤</span> <span id="navUserName">Member</span>
+        <img id="navUserAvatar" class="user-avatar" src="" alt="Avatar">
+        <span id="navUserName">Member</span>
       </div>
     </div>
 
     <div class="nav-controls">
-      <div class="sync-status" id="syncStatus">🟢 Synced</div>
+      <div class="sync-status" id="syncStatus">🟢 Cloud Synced</div>
       <button id="prev" aria-label="Previous day">‹</button>
       <input type="date" id="pick" aria-label="Jump to date" style="background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 10px; color:var(--ink);">
       <button id="nxt" aria-label="Next day">›</button>
@@ -883,18 +899,39 @@ button:disabled {
       
       <!-- Locked Start Date Display -->
       <div class="start-date-badge">
-        <span><span class="lock-icon">🔒</span> Start Date (Fixed): <b id="lockedStartDateDisplay">-</b></span>
+        <span>🔒 Start Date (Fixed): <b id="lockedStartDateDisplay">-</b></span>
         <span style="font-size:0.75rem; color:var(--leaf); font-weight:600;">Day 1 locked</span>
       </div>
     </section>
   </div>
 
   <p class="note" style="text-align:center; margin-top:24px; line-height:1.5;">
-    💡 <strong>Pro-Tip:</strong> Aim for 0.5 to 0.75 kg safe fat loss per week. Stay hydrated, prioritize sleep (7+ hours), and stay consistent. Data is synced in real time to your local SQLite database under your Secret Key.
+    💡 <strong>Pro-Tip:</strong> Aim for 0.5 to 0.75 kg safe fat loss per week. Stay hydrated, prioritize sleep (7+ hours), and stay consistent. Data is synced in real-time to Google Cloud Firestore under your account.
   </p>
 </main>
 
-<script>
+<!-- Firebase Modular SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase Configuration provided by User
+const firebaseConfig = {
+  apiKey: "AIzaSyC_3dJybfohwBfz66_dJg955OGud0CYhU4",
+  authDomain: "fatloss-plan.firebaseapp.com",
+  databaseURL: "https://fatloss-plan-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fatloss-plan",
+  storageBucket: "fatloss-plan.firebasestorage.app",
+  messagingSenderId: "80481245178",
+  appId: "1:80481245178:web:cc8c282a8ce4cdc862b643",
+  measurementId: "G-0YVG0BHHZW"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 // Nutrition & Workout Data Repository
 const A = [
   ["2 moong dal chilla + mint chutney", "Apple", "Big salad first, then 1 katori dal, ¾ cup rice, stir-fried veggies", "Roasted chana (30 g)", "Tomato soup + 100 g paneer bhurji"],
@@ -924,9 +961,10 @@ const S3 = S2 + " Add band/dumbbell rows ×12.";
 
 const $ = id => document.getElementById(id);
 
-// Session State
+// Application State
 let currentUser = null;
-let currentSecretKey = localStorage.getItem("fl60_secret_key") || null;
+let userDocData = null;
+let unsubscribeDoc = null;
 let S = { start: new Date().toISOString().slice(0, 10), done: {}, water: {}, wts: [] };
 
 const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -979,33 +1017,32 @@ function build(n) {
 }
 
 const total = n => build(n).length;
-const cnt = n => Object.keys(S.done).filter(k => k.startsWith(n + ":")).length;
+const cnt = n => Object.keys(S.done || {}).filter(k => k.startsWith(n + ":")).length;
 const today = () => Math.min(60, Math.max(1, Math.floor((new Date(iso(new Date()) + "T00:00:00") - new Date(S.start + "T00:00:00")) / 864e5) + 1));
 let cur = 1;
-
-// API Communication Layer
-async function apiRequest(endpoint, options = {}) {
-  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-  if (currentSecretKey) {
-    headers['x-secret-key'] = currentSecretKey;
-  }
-
-  const res = await fetch(endpoint, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Server request failed');
-  }
-  return data;
-}
 
 function setSyncState(isSyncing) {
   const el = $("syncStatus");
   if (isSyncing) {
     el.className = "sync-status syncing";
-    el.textContent = "🔄 Syncing...";
+    el.textContent = "🔄 Cloud Syncing...";
   } else {
     el.className = "sync-status";
-    el.textContent = "🟢 Synced";
+    el.textContent = "🟢 Cloud Synced";
+  }
+}
+
+// Sync to Firestore
+async function saveToFirestore(updates) {
+  if (!currentUser) return;
+  setSyncState(true);
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, updates, { merge: true });
+    setSyncState(false);
+  } catch (err) {
+    console.error("Firestore sync error:", err);
+    setSyncState(false);
   }
 }
 
@@ -1013,7 +1050,11 @@ function setSyncState(isSyncing) {
 function render() {
   const n = cur, d = dateOf(n), w = Math.ceil(n / 7), L = build(n), t = today();
   
-  $("navUserName").textContent = currentUser ? currentUser.name : "Member";
+  const displayName = userDocData ? userDocData.name : (currentUser ? currentUser.displayName : "Member");
+  const avatarUrl = (userDocData && userDocData.photoURL) || (currentUser && currentUser.photoURL) || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23238b55'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
+  $("navUserName").textContent = displayName;
+  $("navUserAvatar").src = avatarUrl;
   $("lockedStartDateDisplay").textContent = new Date(S.start + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   $("pick").value = iso(d);
   $("dayBig").textContent = "Day " + n;
@@ -1028,7 +1069,7 @@ function render() {
   if (isT) L.forEach((x, i) => { if (hm(x[0]) <= nm) ci = i; });
 
   $("tl").innerHTML = L.map((x, i) => {
-    const dn = S.done[n + ":" + i];
+    const dn = S.done && S.done[n + ":" + i];
     return `<button class="tile ${x[4] === "m" ? "" : x[4]} ${dn ? "done" : ""} ${i === ci ? "cur" : ""}" data-i="${i}" aria-pressed="${!!dn}">
       <span class="chip">${f12(x[0])}</span>
       <i class="ck">✓</i>
@@ -1041,7 +1082,7 @@ function render() {
 
   const nx = $("next");
   if (isT) {
-    const nn = L.findIndex((x, i) => hm(x[0]) > nm && !S.done[n + ":" + i]);
+    const nn = L.findIndex((x, i) => hm(x[0]) > nm && !(S.done && S.done[n + ":" + i]));
     nx.innerHTML = nn > -1 
       ? `<div class="em">${L[nn][5]}</div><small>Up next at ${f12(L[nn][0])}</small><b>${L[nn][1]}</b><span>${L[nn][2]}</span>` 
       : `<div class="em">🌙</div><b>All done for today</b><span>Outstanding job. Rest and recover for tomorrow!</span>`;
@@ -1054,7 +1095,7 @@ function render() {
   $("kdSub").textContent = c === L.length ? "All tasks completed 🎉" : `${L.length - c} tasks remaining`;
   $("kdb").style.width = (c / L.length * 100) + "%";
 
-  const wc = S.water[n] || 0;
+  const wc = (S.water && S.water[n]) || 0;
   $("kw").textContent = wc + "/12";
   $("kwb").style.width = (wc / 12 * 100) + "%";
   $("water").innerHTML = Array.from({ length: 12 }, (_, i) => `<button class="${i < wc ? "on" : ""}" data-w="${i + 1}" aria-label="${i + 1} glasses"></button>`).join("");
@@ -1080,49 +1121,27 @@ function render() {
   $("wl").innerHTML = ws.slice().reverse().map(x => `<div><span>${x.d}</span><b>${x.w} kg</b></div>`).join("");
 }
 
-// User Actions & Event Handlers
+// User Actions
 $("tl").onclick = async e => {
   const b = e.target.closest(".tile");
   if (!b) return;
   const idx = b.dataset.i;
   const k = cur + ":" + idx;
-  const isCompleted = !S.done[k];
-  
-  if (isCompleted) S.done[k] = 1;
-  else delete S.done[k];
-  
+  S.done = S.done || {};
+  if (S.done[k]) delete S.done[k];
+  else S.done[k] = 1;
   render();
-  setSyncState(true);
-  try {
-    await apiRequest('/api/user/toggle-task', {
-      method: 'POST',
-      body: JSON.stringify({ dayNumber: cur, taskIndex: idx, completed: isCompleted ? 1 : 0 })
-    });
-    setSyncState(false);
-  } catch (err) {
-    console.error('Task sync error:', err);
-    setSyncState(false);
-  }
+  await saveToFirestore({ done: S.done });
 };
 
 $("water").onclick = async e => {
   const b = e.target.closest("button");
   if (!b || !b.dataset.w) return;
   const v = +b.dataset.w;
-  const newCount = (S.water[cur] === v ? v - 1 : v);
-  S.water[cur] = newCount;
+  S.water = S.water || {};
+  S.water[cur] = (S.water[cur] === v ? v - 1 : v);
   render();
-  setSyncState(true);
-  try {
-    await apiRequest('/api/user/water', {
-      method: 'POST',
-      body: JSON.stringify({ dayNumber: cur, glasses: newCount })
-    });
-    setSyncState(false);
-  } catch (err) {
-    console.error('Water sync error:', err);
-    setSyncState(false);
-  }
+  await saveToFirestore({ water: S.water });
 };
 
 $("days").onclick = e => {
@@ -1152,20 +1171,10 @@ $("wb").onclick = async () => {
   S.wts.push({ d: k, w: v });
   $("wi").value = "";
   render();
-  setSyncState(true);
-  try {
-    await apiRequest('/api/user/weight', {
-      method: 'POST',
-      body: JSON.stringify({ logDate: k, weight: v })
-    });
-    setSyncState(false);
-  } catch (err) {
-    console.error('Weight sync error:', err);
-    setSyncState(false);
-  }
+  await saveToFirestore({ wts: S.wts });
 };
 
-// Authentication & Modal Handlers
+// Auth Handlers
 function showAuthError(msg) {
   const err = $("authError");
   err.textContent = msg;
@@ -1175,131 +1184,109 @@ function hideAuthError() {
   $("authError").style.display = "none";
 }
 
-$("tabRegister").onclick = () => {
-  $("tabRegister").classList.add("active");
-  $("tabLogin").classList.remove("active");
-  $("registerForm").style.display = "block";
-  $("loginForm").style.display = "none";
+$("btnGoogleLogin").onclick = async () => {
   hideAuthError();
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error("Google Auth error:", err);
+    showAuthError(err.message || "Failed to sign in with Google.");
+  }
 };
 
-$("tabLogin").onclick = () => {
-  $("tabLogin").classList.add("active");
-  $("tabRegister").classList.remove("active");
-  $("loginForm").style.display = "block";
-  $("registerForm").style.display = "none";
+$("btnAppleLogin").onclick = async () => {
   hideAuthError();
+  const provider = new OAuthProvider('apple.com');
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    console.error("Apple Auth error:", err);
+    showAuthError(err.message || "Failed to sign in with Apple.");
+  }
 };
 
-$("registerForm").onsubmit = async (e) => {
+// Onboarding Submission
+$("onboardingForm").onsubmit = async (e) => {
   e.preventDefault();
-  hideAuthError();
-  const name = $("regName").value.trim();
-  const secretKey = $("regSecret").value.trim();
-  const startDate = $("regStart").value;
-  const initialWeight = $("regWeight").value;
-  const targetWeight = $("regTarget").value;
+  if (!currentUser) return;
 
-  if (!name || !secretKey || !startDate) {
-    showAuthError("Please fill in Name, Secret Key, and Start Date.");
+  const name = $("onboardName").value.trim();
+  const startDate = $("onboardStartDate").value;
+  const initialWeight = parseFloat($("onboardWeight").value);
+  const targetWeight = parseFloat($("onboardTarget").value);
+
+  if (!name || !startDate) {
+    alert("Please enter your name and select a start date.");
     return;
   }
 
-  const btn = $("btnRegisterSubmit");
+  const btn = $("btnOnboardSubmit");
   btn.disabled = true;
   btn.textContent = "Setting up your plan...";
 
-  try {
-    const res = await apiRequest('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, secretKey, startDate, initialWeight, targetWeight })
-    });
+  const initialWts = (!isNaN(initialWeight) && initialWeight > 0) ? [{ d: startDate, w: initialWeight }] : [];
 
-    currentSecretKey = secretKey;
-    localStorage.setItem("fl60_secret_key", secretKey);
-    currentUser = res.user;
-    S = res.data;
-    $("authModal").classList.add("hidden");
-    cur = today();
-    render();
+  const initialProfile = {
+    name: name,
+    email: currentUser.email || "",
+    photoURL: currentUser.photoURL || "",
+    startDate: startDate,
+    initialWeight: isNaN(initialWeight) ? null : initialWeight,
+    targetWeight: isNaN(targetWeight) ? null : targetWeight,
+    createdAt: new Date().toISOString(),
+    done: {},
+    water: {},
+    wts: initialWts
+  };
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, initialProfile);
+    $("onboardingModal").classList.add("hidden");
+    // Snapshot listener will load data automatically
   } catch (err) {
-    showAuthError(err.message);
+    console.error("Error creating profile:", err);
+    alert("Could not save profile: " + err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "🚀 Begin 60-Day Transformation";
+    btn.textContent = "🚀 Confirm & Start 60-Day Journey";
   }
 };
 
-$("loginForm").onsubmit = async (e) => {
-  e.preventDefault();
-  hideAuthError();
-  const secretKey = $("loginSecret").value.trim();
-
-  if (!secretKey) {
-    showAuthError("Please enter your Secret Key.");
-    return;
-  }
-
-  const btn = $("btnLoginSubmit");
-  btn.disabled = true;
-  btn.textContent = "Unlocking...";
-
-  try {
-    const res = await apiRequest('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ secretKey })
-    });
-
-    currentSecretKey = secretKey;
-    localStorage.setItem("fl60_secret_key", secretKey);
-    currentUser = res.user;
-    S = res.data;
-    $("authModal").classList.add("hidden");
-    cur = today();
-    render();
-  } catch (err) {
-    showAuthError(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "🔓 Unlock Dashboard";
-  }
-};
-
-// Profile & Settings
+// Profile Modal Actions
 $("userBadge").onclick = () => {
   if (!currentUser) return;
-  $("profName").textContent = currentUser.name;
+  const avatarUrl = (userDocData && userDocData.photoURL) || currentUser.photoURL || "";
+  $("profAvatar").src = avatarUrl;
+  $("profName").textContent = (userDocData && userDocData.name) || currentUser.displayName || "Member";
+  $("profEmail").textContent = currentUser.email || "Signed in with Social Provider";
   $("profStart").textContent = new Date(S.start + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   $("profileModal").classList.remove("hidden");
 };
 
 $("btnCloseProfile").onclick = () => $("profileModal").classList.add("hidden");
 
-$("btnCopyKey").onclick = () => {
-  if (!currentSecretKey) return;
-  navigator.clipboard.writeText(currentSecretKey).then(() => {
-    $("btnCopyKey").textContent = "✅ Copied!";
-    setTimeout(() => { $("btnCopyKey").textContent = "📋 Copy Key"; }, 2000);
-  });
-};
-
 $("btnExportData").onclick = () => {
-  if (!currentSecretKey) return;
-  window.location.href = `/api/user/export?key=${encodeURIComponent(currentSecretKey)}`;
+  if (!userDocData) return;
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDocData, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `fatloss_backup_${(userDocData.name || "plan").replace(/\s+/g, '_')}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
 };
 
-$("btnLogout").onclick = () => {
-  if (confirm("Log out of this session? You will need your Secret Key to log back in.")) {
-    localStorage.removeItem("fl60_secret_key");
-    currentSecretKey = null;
-    currentUser = null;
+$("btnLogout").onclick = async () => {
+  if (confirm("Sign out of your account?")) {
+    if (unsubscribeDoc) unsubscribeDoc();
+    await signOut(auth);
     $("profileModal").classList.add("hidden");
-    $("authModal").classList.remove("hidden");
-    $("tabLogin").click();
   }
 };
 
-// Theme switcher
+// Theme toggle
 $("btnThemeToggle").onclick = () => {
   const current = document.documentElement.getAttribute("data-theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   const next = current === "dark" ? "light" : "dark";
@@ -1307,39 +1294,61 @@ $("btnThemeToggle").onclick = () => {
   localStorage.setItem("fl60_theme", next);
 };
 
-// Initialize App
-async function init() {
-  // Set default start date in onboarding form to today
-  $("regStart").value = iso(new Date());
-
-  // Restore Theme
-  const savedTheme = localStorage.getItem("fl60_theme");
-  if (savedTheme) {
-    document.documentElement.setAttribute("data-theme", savedTheme);
+// Auth State Listener
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (!user) {
+    if (unsubscribeDoc) {
+      unsubscribeDoc();
+      unsubscribeDoc = null;
+    }
+    userDocData = null;
+    $("authModal").classList.remove("hidden");
+    $("onboardingModal").classList.add("hidden");
+    return;
   }
 
-  // Attempt auto-login if secret key is in storage
-  if (currentSecretKey) {
-    try {
-      const res = await apiRequest('/api/user/me');
-      currentUser = res.user;
-      S = res.data;
-      $("authModal").classList.add("hidden");
+  // User is authenticated, check if profile exists in Firestore
+  $("authModal").classList.add("hidden");
+
+  const userRef = doc(db, 'users', user.uid);
+  const docSnap = await getDoc(userRef);
+
+  if (!docSnap.exists()) {
+    // New user -> Show Onboarding Start-Date prompt
+    $("onboardUserAvatar").src = user.photoURL || "";
+    $("onboardName").value = user.displayName || "";
+    $("onboardStartDate").value = iso(new Date());
+    $("onboardGreeting").textContent = `Welcome ${user.displayName || "there"}! Let's lock in your 60-day start date.`;
+    $("onboardingModal").classList.remove("hidden");
+  } else {
+    // Existing user -> listen to real-time updates
+    $("onboardingModal").classList.add("hidden");
+  }
+
+  // Real-time Firestore document listener
+  if (unsubscribeDoc) unsubscribeDoc();
+  unsubscribeDoc = onSnapshot(userRef, (snapshot) => {
+    if (snapshot.exists()) {
+      userDocData = snapshot.data();
+      S = {
+        start: userDocData.startDate || iso(new Date()),
+        done: userDocData.done || {},
+        water: userDocData.water || {},
+        wts: userDocData.wts || []
+      };
       cur = today();
       render();
-      return;
-    } catch (err) {
-      console.warn('Auto-login session expired or invalid:', err);
-      localStorage.removeItem("fl60_secret_key");
-      currentSecretKey = null;
     }
-  }
+  });
+});
 
-  // Show Auth Modal if not logged in
-  $("authModal").classList.remove("hidden");
+// Initial settings
+const savedTheme = localStorage.getItem("fl60_theme");
+if (savedTheme) {
+  document.documentElement.setAttribute("data-theme", savedTheme);
 }
 
-init();
 setInterval(() => { if (cur === today()) render(); }, 60000);
 </script>
 </body>
