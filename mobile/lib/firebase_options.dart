@@ -30,8 +30,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC_3dJybfohwBfz66_dJg955OGud0CYhU4',
-    appId: '1:80481245178:android:cc8c282a8ce4cdc862b643',
+    apiKey: 'AIzaSyDy3NM08FuyliDM9CIpU35vQClSiFq2VNI',
+    appId: '1:80481245178:android:4526ddcdf908258a62b643',
     messagingSenderId: '80481245178',
     projectId: 'fatloss-plan',
     databaseURL: 'https://fatloss-plan-default-rtdb.asia-southeast1.firebasedatabase.app',

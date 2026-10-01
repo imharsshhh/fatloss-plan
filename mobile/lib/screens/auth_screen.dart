@@ -25,7 +25,9 @@ class _AuthScreenState extends State<AuthScreen> {
         final googleProvider = GoogleAuthProvider();
         await FirebaseAuth.instance.signInWithPopup(googleProvider);
       } else {
-        final GoogleSignIn googleSignIn = GoogleSignIn();
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          serverClientId: '80481245178-tduarasv3scotn171640ubk735p5l8q8.apps.googleusercontent.com',
+        );
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
         if (googleUser == null) {
           setState(() => _isLoading = false);

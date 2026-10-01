@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "80481245178",
+    "firebase_url": "https://fatloss-plan-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "fatloss-plan",
+    "storage_bucket": "fatloss-plan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80481245178:android:4526ddcdf908258a62b643",
+        "android_client_info": {
+          "package_name": "com.fatlossplan.fatloss_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "80481245178-d2ujhu6snm9o88jonp4k5jvgoue4m6vp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fatlossplan.fatloss_app",
+            "certificate_hash": "78e065b6ee0812f4e468b1ea6b63796e96db3555"
+          }
+        },
+        {
+          "client_id": "80481245178-tduarasv3scotn171640ubk735p5l8q8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy3NM08FuyliDM9CIpU35vQClSiFq2VNI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "80481245178-tduarasv3scotn171640ubk735p5l8q8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
