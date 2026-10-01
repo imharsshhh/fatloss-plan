@@ -12,16 +12,27 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  // Initialize local notifications and schedule daily nudges
-  final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.requestPermissions();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase initializeApp error: $e");
+  }
 
+  // Draw first frame immediately to dismiss Android splash screen without delay
   runApp(const FatlossPlanApp());
+
+  // Initialize notifications asynchronously in background after first frame
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.init();
+      await notificationService.requestPermissions();
+    } catch (e) {
+      debugPrint("NotificationService startup error: $e");
+    }
+  });
 }
 
 class FatlossPlanApp extends StatelessWidget {
@@ -86,6 +97,9 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
+        if (authSnapshot.hasError) {
+          return const AuthScreen();
+        }
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
@@ -103,6 +117,9 @@ class AuthGate extends StatelessWidget {
         return StreamBuilder<UserPlan?>(
           stream: FirestoreService().streamUserPlan(user.uid),
           builder: (context, planSnapshot) {
+            if (planSnapshot.hasError) {
+              return OnboardingScreen(user: user);
+            }
             if (planSnapshot.connectionState == ConnectionState.waiting &&
                 !planSnapshot.hasData) {
               return const Scaffold(

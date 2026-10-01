@@ -34,112 +34,130 @@ class NotificationService {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Initialize Timezones
-    tz_data.initializeTimeZones();
     try {
-      final tzInfo = await FlutterTimezone.getLocalTimezone();
-      final locationName = tzInfo.identifier;
-      tz.setLocalLocation(tz.getLocation(locationName));
+      // Initialize Timezones
+      tz_data.initializeTimeZones();
+      try {
+        final tzInfo = await FlutterTimezone.getLocalTimezone();
+        final locationName = tzInfo.identifier;
+        tz.setLocalLocation(tz.getLocation(locationName));
+      } catch (e) {
+        if (kDebugMode) {
+          print("Warning: Could not get local timezone: $e. Falling back to UTC/Local.");
+        }
+        try {
+          tz.setLocalLocation(tz.local);
+        } catch (_) {}
+      }
+
+      // Android Initialization Settings with custom monochrome notification silhouette
+      const androidSettings =
+          AndroidInitializationSettings('@drawable/ic_notification');
+
+      // iOS / Darwin Initialization Settings
+      const darwinSettings = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: darwinSettings,
+        macOS: darwinSettings,
+      );
+
+      await _notificationsPlugin.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (kDebugMode) {
+            print("Notification tapped with payload: ${response.payload}");
+          }
+        },
+      );
+
+      // Create High-Priority Notification Channels explicitly for Android
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          final androidImpl = _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>();
+          if (androidImpl != null) {
+            const taskChannel = AndroidNotificationChannel(
+              taskChannelId,
+              taskChannelName,
+              description: taskChannelDesc,
+              importance: Importance.max,
+              playSound: true,
+              enableVibration: true,
+              showBadge: true,
+            );
+
+            const waterChannel = AndroidNotificationChannel(
+              waterChannelId,
+              waterChannelName,
+              description: waterChannelDesc,
+              importance: Importance.max,
+              playSound: true,
+              enableVibration: true,
+              showBadge: true,
+            );
+
+            await androidImpl.createNotificationChannel(taskChannel);
+            await androidImpl.createNotificationChannel(waterChannel);
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print("Warning: Error creating notification channels: $e");
+          }
+        }
+      }
+
+      _isInitialized = true;
+
+      // Automatically reschedule daily nudges if enabled
+      final isEnabled = await areNotificationsEnabled();
+      if (isEnabled) {
+        await scheduleAllDailyNudges();
+      }
     } catch (e) {
       if (kDebugMode) {
-        print("Warning: Could not get local timezone: $e. Falling back to UTC/Local.");
+        print("NotificationService init error: $e");
       }
-      try {
-        tz.setLocalLocation(tz.local);
-      } catch (_) {}
-    }
-
-    // Android Initialization Settings with custom monochrome notification silhouette
-    const androidSettings =
-        AndroidInitializationSettings('@drawable/ic_notification');
-
-    // iOS / Darwin Initialization Settings
-    const darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
-
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: darwinSettings,
-      macOS: darwinSettings,
-    );
-
-    await _notificationsPlugin.initialize(
-      settings: initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (kDebugMode) {
-          print("Notification tapped with payload: ${response.payload}");
-        }
-      },
-    );
-
-    // Create High-Priority Notification Channels explicitly for Android
-    if (!kIsWeb && Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImpl != null) {
-        const taskChannel = AndroidNotificationChannel(
-          taskChannelId,
-          taskChannelName,
-          description: taskChannelDesc,
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-          showBadge: true,
-        );
-
-        const waterChannel = AndroidNotificationChannel(
-          waterChannelId,
-          waterChannelName,
-          description: waterChannelDesc,
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-          showBadge: true,
-        );
-
-        await androidImpl.createNotificationChannel(taskChannel);
-        await androidImpl.createNotificationChannel(waterChannel);
-      }
-    }
-
-    _isInitialized = true;
-
-    // Automatically reschedule daily nudges if enabled
-    final isEnabled = await areNotificationsEnabled();
-    if (isEnabled) {
-      await scheduleAllDailyNudges();
     }
   }
 
   Future<bool> requestPermissions() async {
     if (kIsWeb) return false;
 
-    if (Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImpl != null) {
-        final granted = await androidImpl.requestNotificationsPermission();
-        try {
-          await androidImpl.requestExactAlarmsPermission();
-        } catch (_) {}
-        return granted ?? false;
+    try {
+      if (Platform.isAndroid) {
+        final androidImpl = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidImpl != null) {
+          final granted = await androidImpl.requestNotificationsPermission();
+          try {
+            await androidImpl.requestExactAlarmsPermission();
+          } catch (_) {}
+          return granted ?? false;
+        }
+      } else if (Platform.isIOS || Platform.isMacOS) {
+        final iosImpl = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>();
+        if (iosImpl != null) {
+          final granted = await iosImpl.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          return granted ?? false;
+        }
       }
-    } else if (Platform.isIOS || Platform.isMacOS) {
-      final iosImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
-      if (iosImpl != null) {
-        final granted = await iosImpl.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        return granted ?? false;
+    } catch (e) {
+      if (kDebugMode) {
+        print("NotificationService requestPermissions error: $e");
       }
     }
     return true;
@@ -524,15 +542,28 @@ class NotificationService {
         iOS: iosDetails,
       );
 
-      await _notificationsPlugin.zonedSchedule(
-        id: id,
-        title: title,
-        body: body,
-        scheduledDate: scheduledTime,
-        notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: scheduledTime,
+          notificationDetails: notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (exactErr) {
+        // Fallback to inexact if exact alarm permission is not granted on this device
+        await _notificationsPlugin.zonedSchedule(
+          id: id,
+          title: title,
+          body: body,
+          scheduledDate: scheduledTime,
+          notificationDetails: notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
     } catch (e) {
       if (kDebugMode) {
         print("Error scheduling notification $id ($title): $e");
