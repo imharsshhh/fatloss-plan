@@ -75,6 +75,37 @@ class NotificationService {
       },
     );
 
+    // Create High-Priority Notification Channels explicitly for Android
+    if (!kIsWeb && Platform.isAndroid) {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImpl != null) {
+        const taskChannel = AndroidNotificationChannel(
+          taskChannelId,
+          taskChannelName,
+          description: taskChannelDesc,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          showBadge: true,
+        );
+
+        const waterChannel = AndroidNotificationChannel(
+          waterChannelId,
+          waterChannelName,
+          description: waterChannelDesc,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          showBadge: true,
+        );
+
+        await androidImpl.createNotificationChannel(taskChannel);
+        await androidImpl.createNotificationChannel(waterChannel);
+      }
+    }
+
     _isInitialized = true;
 
     // Automatically reschedule daily nudges if enabled
@@ -88,15 +119,20 @@ class NotificationService {
     if (kIsWeb) return false;
 
     if (Platform.isAndroid) {
-      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       if (androidImpl != null) {
         final granted = await androidImpl.requestNotificationsPermission();
+        try {
+          await androidImpl.requestExactAlarmsPermission();
+        } catch (_) {}
         return granted ?? false;
       }
     } else if (Platform.isIOS || Platform.isMacOS) {
-      final iosImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final iosImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
       if (iosImpl != null) {
         final granted = await iosImpl.requestPermissions(
           alert: true,
@@ -129,7 +165,7 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
-  /// Schedule all daily recurring nudges (meals 30 mins before, drinks 10 mins before, water checks)
+  /// Schedule all daily recurring nudges (meals 30 mins before, drinks 10 mins before, exact 12-glass water intervals)
   Future<void> scheduleAllDailyNudges() async {
     if (!_isInitialized) await init();
     await cancelAll();
@@ -255,75 +291,147 @@ class NotificationService {
     );
 
     // -------------------------------------------------------------
-    // 4. DAILY WATER GOAL NUDGES (Periodic 12-glass reminders)
+    // 4. DAILY WATER GOAL INTERVAL NUDGES (Exact 12-Glass Schedule)
     // -------------------------------------------------------------
-    // 09:00 AM
+    // Glass 1: 07:00 AM
     await _scheduleDailyNotification(
       id: 401,
-      hour: 9,
+      hour: 7,
       minute: 0,
-      title: "💧 Water Goal: Morning Hydration",
-      body: "Log your morning glasses of water! Daily target is 12 glasses (3.5 Liters).",
+      title: "💧 Glass 1/12 (Morning Kickstart)",
+      body: "Drink your 1st glass of water to wake up your metabolism and rehydrate!",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
     );
 
-    // 11:30 AM
+    // Glass 2: 08:15 AM
     await _scheduleDailyNotification(
       id: 402,
-      hour: 11,
-      minute: 30,
-      title: "💧 Water Goal: Pre-Lunch Glass",
-      body: "Drink a full glass of water 30 mins before lunch to aid satiety and digestion.",
+      hour: 8,
+      minute: 15,
+      title: "💧 Glass 2/12 (Post-Breakfast Rehydrate)",
+      body: "Glass #2! Keep digestive fluids moving smoothly after breakfast.",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
     );
 
-    // 02:30 PM
+    // Glass 3: 09:30 AM
     await _scheduleDailyNotification(
       id: 403,
-      hour: 14,
+      hour: 9,
       minute: 30,
-      title: "💧 Water Goal: Afternoon Boost",
-      body: "Keep your energy high and cravings low. Have a fresh glass of water now.",
+      title: "💧 Glass 3/12 (Morning Energy)",
+      body: "Time for glass #3! Stay sharp, energized, and curb premature cravings.",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
     );
 
-    // 05:00 PM
+    // Glass 4: 10:45 AM
     await _scheduleDailyNotification(
       id: 404,
-      hour: 17,
-      minute: 0,
-      title: "💧 Water Goal: Pre-Workout Hydration",
-      body: "Drink 1-2 glasses of water before your evening walk/workout.",
+      hour: 10,
+      minute: 45,
+      title: "💧 Glass 4/12 (Mid-Morning Hydration)",
+      body: "Sip glass #4 now! 1 liter mark reached — keep the momentum going.",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
     );
 
-    // 07:00 PM
+    // Glass 5: 12:00 PM
     await _scheduleDailyNotification(
       id: 405,
-      hour: 19,
+      hour: 12,
       minute: 0,
-      title: "💧 Water Goal: Evening Check-in",
-      body: "Almost there! How many glasses logged today? Push towards the 12-glass mark.",
+      title: "💧 Glass 5/12 (Pre-Lunch Satiety)",
+      body: "Drink glass #5 ~45 mins before lunch for better appetite control and digestion.",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
     );
 
-    // 09:15 PM
+    // Glass 6: 01:45 PM
     await _scheduleDailyNotification(
       id: 406,
-      hour: 21,
+      hour: 13,
+      minute: 45,
+      title: "💧 Glass 6/12 (Halfway Mark - 1.75L!)",
+      body: "Glass #6! You are 50% through your daily water goal. Great pace!",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 7: 03:00 PM
+    await _scheduleDailyNotification(
+      id: 407,
+      hour: 15,
+      minute: 0,
+      title: "💧 Glass 7/12 (Afternoon Revive)",
+      body: "Defeat the 3 PM afternoon slump with glass #7. Zero sugar, pure energy.",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 8: 04:15 PM
+    await _scheduleDailyNotification(
+      id: 408,
+      hour: 16,
       minute: 15,
-      title: "💧 Water Goal: Final Daily Review",
-      body: "Wrap up today's 12 glasses (3.5L) and check off all tasks for 100% completion!",
+      title: "💧 Glass 8/12 (Pre-Snack Refresh)",
+      body: "Glass #8! Drink a full glass of water before your evening snack and tea.",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 9: 05:30 PM
+    await _scheduleDailyNotification(
+      id: 409,
+      hour: 17,
+      minute: 30,
+      title: "💧 Glass 9/12 (Pre-Workout / Walk)",
+      body: "Fuel your evening walk/workout with glass #9 for optimal stamina.",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 10: 07:00 PM
+    await _scheduleDailyNotification(
+      id: 410,
+      hour: 19,
+      minute: 0,
+      title: "💧 Glass 10/12 (Pre-Dinner Hydration)",
+      body: "Glass #10! Almost there — only 2 glasses left to conquer your 3.5L goal.",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 11: 08:15 PM
+    await _scheduleDailyNotification(
+      id: 411,
+      hour: 20,
+      minute: 15,
+      title: "💧 Glass 11/12 (Evening Hydration)",
+      body: "Penultimate glass #11! Smooth finish to your daily water intake.",
+      channelId: waterChannelId,
+      channelName: waterChannelName,
+      channelDesc: waterChannelDesc,
+    );
+
+    // Glass 12: 09:30 PM
+    await _scheduleDailyNotification(
+      id: 412,
+      hour: 21,
+      minute: 30,
+      title: "🎉 Glass 12/12 (Daily Goal Complete!)",
+      body: "Final glass #12! Congratulations on hitting your full 3.5L water target today!",
       channelId: waterChannelId,
       channelName: waterChannelName,
       channelDesc: waterChannelDesc,
@@ -348,23 +456,25 @@ class NotificationService {
   Future<void> sendInstantTestNotification() async {
     if (!_isInitialized) await init();
 
-    final androidDetails = AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       taskChannelId,
       taskChannelName,
       channelDescription: taskChannelDesc,
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       icon: '@drawable/ic_notification',
-      color: const Color(0xFF238B55),
+      color: Color(0xFF238B55),
+      visibility: NotificationVisibility.public,
     );
 
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
-    final details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -372,7 +482,7 @@ class NotificationService {
     await _notificationsPlugin.show(
       id: 999,
       title: "🥗 60-Day Veg Fat Loss Nudges Active!",
-      body: "You'll get reminders for water goals, meals (30m before), and green tea/coffee (10m before).",
+      body: "You'll get reminders for water goals (12 glasses), meals (30m before), and drinks (10m before).",
       notificationDetails: details,
     );
   }
@@ -394,16 +504,19 @@ class NotificationService {
         channelId,
         channelName,
         channelDescription: channelDesc,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         icon: '@drawable/ic_notification',
         color: const Color(0xFF238B55),
+        category: AndroidNotificationCategory.reminder,
+        visibility: NotificationVisibility.public,
       );
 
       const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
       );
 
       final notificationDetails = NotificationDetails(
@@ -417,7 +530,7 @@ class NotificationService {
         body: body,
         scheduledDate: scheduledTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } catch (e) {

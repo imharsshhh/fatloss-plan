@@ -394,11 +394,11 @@ class _ProfileDialogState extends State<ProfileDialog> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "• 💧 Water Goal: Periodic 12-glass reminders\n"
+                    "• 💧 Daily Water: Exact timed intervals for all 12 glasses (3.5L)\n"
                     "• 🍳 Meals: Nudged 30 mins before\n"
                     "• ☕ Green Tea / Coffee: Nudged 10 mins before\n"
                     "• 🚶 Walks & Workouts: 10–15 mins before\n"
-                    "• 🌙 Nightly Review: 9:45 PM summary",
+                    "• 🌙 Nightly Review: 9:45 PM roadmap check",
                     style: TextStyle(
                       fontSize: 12,
                       height: 1.45,
