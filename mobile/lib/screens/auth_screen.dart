@@ -50,33 +50,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _signInWithApple() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final appleProvider = OAuthProvider('apple.com')
-        ..addScope('email')
-        ..addScope('name');
-
-      if (kIsWeb) {
-        await FirebaseAuth.instance.signInWithPopup(appleProvider);
-      } else {
-        await FirebaseAuth.instance.signInWithProvider(appleProvider);
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = "Apple Sign-In failed: ${e.toString()}";
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -200,40 +173,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Apple Sign-In Button
-                    ElevatedButton(
-                      onPressed: _signInWithApple,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        backgroundColor: isDark ? Colors.white : Colors.black,
-                        foregroundColor: isDark ? Colors.black : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.apple,
-                            size: 24,
-                            color: isDark ? Colors.black : Colors.white,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            "Continue with Apple",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.black : Colors.white,
                             ),
                           ),
                         ],

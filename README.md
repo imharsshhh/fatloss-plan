@@ -1,6 +1,6 @@
 # 🥗 60-Day Veg Fat Loss Dashboard
 
-A modern, serverless fitness and nutrition tracking web application powered by **Google Firebase Authentication** (Google & Apple Sign-In), **Cloud Firestore Database**, and **Firebase Hosting**.
+A modern, serverless fitness and nutrition tracking web application powered by **Google Firebase Authentication** (Google Sign-In), **Cloud Firestore Database**, and **Firebase Hosting**.
 
 ---
 
@@ -11,8 +11,8 @@ A modern, serverless fitness and nutrition tracking web application powered by *
    - All user data (daily checklists, 12-glass water intake, weigh-ins, starting & target weights) is stored in Google Cloud Firestore under the `users/{userId}` collection.
    - Real-time live synchronization across phones, laptops, and tablets using Firestore `onSnapshot` listeners.
 
-2. **🔑 Google & Apple Authentication**:
-   - One-tap sign-in with Google or Apple accounts.
+2. **🔑 Google Authentication**:
+   - One-tap sign-in with your Google account.
    - Auto-populates verified member profile name and avatar.
 
 3. **🗓️ One-Time Start Date Onboarding Lock**:
