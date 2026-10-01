@@ -19,5 +19,18 @@
   },
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Fatloss Plan",
+        "supportEmail": "moradiyas.cool@gmail.com",
+        "authorizedRedirectUris": [
+          "https://fatloss-plan.firebaseapp.com/__/auth/handler",
+          "https://fatloss-plan.web.app/__/auth/handler",
+          "http://localhost"
+        ]
+      }
+    }
   }
 }
