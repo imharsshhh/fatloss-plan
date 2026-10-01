@@ -784,12 +784,43 @@ button:disabled {
     </div>
 
     <div style="display:flex; flex-direction:column; gap:10px;">
+      <!-- Option 1: Keep Account & Reset Data / Change Date -->
+      <button id="btnOpenResetDate" style="width:100%; padding:10px; border-color:var(--leaf); color:var(--leaf); display:flex; align-items:center; justify-content:center; gap:6px; font-weight:600;">
+        🔄 Change Start Date & Reset Data
+      </button>
       <button id="btnExportData" style="width:100%; padding:10px; display:flex; align-items:center; justify-content:center; gap:6px;">
         💾 Download JSON Backup
       </button>
-      <button id="btnLogout" style="width:100%; padding:10px; color:var(--red); border-color:var(--red); display:flex; align-items:center; justify-content:center; gap:6px;">
+      <button id="btnLogout" style="width:100%; padding:10px; color:var(--mute); border-color:var(--line); display:flex; align-items:center; justify-content:center; gap:6px;">
         🚪 Sign Out
       </button>
+      <!-- Option 2: Delete Account & All Data -->
+      <button id="btnDeleteAccount" style="width:100%; padding:10px; color:var(--red); border-color:var(--red); display:flex; align-items:center; justify-content:center; gap:6px; font-weight:600;">
+        🗑️ Delete Account & All Data
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reset Plan & Change Start Date -->
+<div id="resetDateModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 class="modal-title" style="margin:0;">🔄 Change Start Date & Reset</h3>
+      <button id="btnCloseResetModal" style="padding:4px 8px; border-radius:8px;">✕</button>
+    </div>
+    <div class="notice-box" style="margin-bottom: 16px;">
+      ⚠️ <strong>Fresh Start:</strong> This will keep your Google account active, reset your Day 1 to the new date, and clear all previous task checkmarks, water intake, and weigh-in records.
+    </div>
+
+    <div class="form-group">
+      <label for="resetStartDateInput">Select New Day 1 Start Date</label>
+      <input type="date" id="resetStartDateInput" required>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button type="button" id="btnCancelResetDate" style="flex:1; padding: 11px;">Cancel</button>
+      <button type="button" id="btnConfirmResetDate" class="btn-primary" style="flex:1.5; padding: 11px;">Confirm & Reset</button>
     </div>
   </div>
 </div>
@@ -921,8 +952,8 @@ button:disabled {
 <!-- Firebase Modular SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Configuration provided by User
 const firebaseConfig = {
@@ -1285,6 +1316,79 @@ $("userBadge").onclick = () => {
 };
 
 $("btnCloseProfile").onclick = () => $("profileModal").classList.add("hidden");
+
+// Option 1: Open Reset Modal
+$("btnOpenResetDate").onclick = () => {
+  if (!userDocData) return;
+  $("resetStartDateInput").value = userDocData.startDate || S.start;
+  $("resetDateModal").classList.remove("hidden");
+};
+
+$("btnCloseResetModal").onclick = () => $("resetDateModal").classList.add("hidden");
+$("btnCancelResetDate").onclick = () => $("resetDateModal").classList.add("hidden");
+
+$("btnConfirmResetDate").onclick = async () => {
+  if (!currentUser) return;
+  const newDate = $("resetStartDateInput").value;
+  if (!newDate) {
+    alert("Please select a valid start date.");
+    return;
+  }
+
+  const btn = $("btnConfirmResetDate");
+  btn.disabled = true;
+  btn.textContent = "Resetting...";
+
+  try {
+    const userRef = doc(db, "users", currentUser.uid);
+    await updateDoc(userRef, {
+      startDate: newDate,
+      done: {},
+      water: {},
+      wts: []
+    });
+
+    $("resetDateModal").classList.add("hidden");
+    $("profileModal").classList.add("hidden");
+    alert(`✨ Plan reset successfully! New Start Date is ${new Date(newDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}.`);
+  } catch (err) {
+    console.error("Error resetting plan:", err);
+    alert("Failed to reset plan: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Confirm & Reset";
+  }
+};
+
+// Option 2: Delete Account & Wipe All Data
+$("btnDeleteAccount").onclick = async () => {
+  if (!currentUser) return;
+  const confirmed = confirm(
+    "🚨 PERMANENT ACTION:\n\nAre you sure you want to permanently delete your account and all stored fat loss progress from Firebase?\n\nThis cannot be undone."
+  );
+  if (!confirmed) return;
+
+  try {
+    const userRef = doc(db, "users", currentUser.uid);
+    if (unsubscribeDoc) {
+      unsubscribeDoc();
+      unsubscribeDoc = null;
+    }
+    await deleteDoc(userRef);
+    await deleteUser(currentUser);
+    $("profileModal").classList.add("hidden");
+    alert("Account and cloud data deleted successfully.");
+  } catch (err) {
+    console.error("Error deleting account:", err);
+    if (err.code === "auth/requires-recent-login") {
+      alert("Please sign in again before deleting your account for security.");
+      await signOut(auth);
+      $("profileModal").classList.add("hidden");
+    } else {
+      alert("Failed to delete account: " + err.message);
+    }
+  }
+};
 
 $("btnExportData").onclick = () => {
   if (!userDocData) return;

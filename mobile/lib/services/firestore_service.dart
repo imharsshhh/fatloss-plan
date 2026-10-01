@@ -63,4 +63,22 @@ class FirestoreService {
       'wts': updated.map((e) => e.toMap()).toList(),
     });
   }
+
+  /// Option 1: Keep Account & Clear All Data (Reset Start Date)
+  Future<void> resetPlanDataAndStartDate({
+    required String uid,
+    required String newStartDate,
+  }) async {
+    await _usersRef.doc(uid).update({
+      'startDate': newStartDate,
+      'done': <String, int>{},
+      'water': <String, int>{},
+      'wts': <Map<String, dynamic>>[],
+    });
+  }
+
+  /// Option 2: Delete Firestore Record & Delete Firebase Auth Account
+  Future<void> deleteUserPlanAndAccount(String uid) async {
+    await _usersRef.doc(uid).delete();
+  }
 }
