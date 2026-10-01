@@ -1,0 +1,20 @@
+{
+  "name": "fatloss-plan",
+  "version": "1.0.0",
+  "description": "60-Day Veg Fat Loss Dashboard with Node.js SQLite Backend & Secret Key Authentication",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["fatloss", "dashboard", "health", "fitness"],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
