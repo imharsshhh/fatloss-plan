@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,9 +49,9 @@ class NotificationService {
       } catch (_) {}
     }
 
-    // Android Initialization Settings
+    // Android Initialization Settings with custom monochrome notification silhouette
     const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     // iOS / Darwin Initialization Settings
     const darwinSettings = DarwinInitializationSettings(
@@ -353,7 +354,8 @@ class NotificationService {
       channelDescription: taskChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
+      color: const Color(0xFF238B55),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -394,7 +396,8 @@ class NotificationService {
         channelDescription: channelDesc,
         importance: Importance.high,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/ic_notification',
+        color: const Color(0xFF238B55),
       );
 
       const iosDetails = DarwinNotificationDetails(
