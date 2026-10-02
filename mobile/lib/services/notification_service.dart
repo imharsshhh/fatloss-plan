@@ -183,48 +183,103 @@ class NotificationService {
     await _notificationsPlugin.cancelAll();
   }
 
+  static int _timeToMinutes(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      return (int.parse(parts[0]) * 60) + int.parse(parts[1]);
+    } catch (_) {
+      return 360; // 06:00
+    }
+  }
+
+  static (int, int) _minuteToHourMin(int totalMinutes) {
+    final normalized = (totalMinutes % 1440 + 1440) % 1440;
+    return (normalized ~/ 60, normalized % 60);
+  }
+
   /// Schedule all daily recurring nudges (meals 30 mins before, drinks 10 mins before, exact 12-glass water intervals)
-  Future<void> scheduleAllDailyNudges() async {
+  Future<void> scheduleAllDailyNudges({
+    String wakeUpTime = "06:00",
+    String bedTime = "23:00",
+    int napDuration = 0,
+    String morningDrink = "jeera",
+    String middayDrink = "green_tea",
+  }) async {
     if (!_isInitialized) await init();
     await cancelAll();
 
     final isEnabled = await areNotificationsEnabled();
     if (!isEnabled) return;
 
+    final tWake = _timeToMinutes(wakeUpTime);
+    final tBed = _timeToMinutes(bedTime);
+
     // -------------------------------------------------------------
     // 1. DRINK & HERBAL NUDGES (10 mins before timetable)
     // -------------------------------------------------------------
-    // Timetable 06:00 (Jeera Water) -> Nudge at 05:50
+    // Morning Detox Drink (10 mins before wake-up / drink slot)
+    final (dh1, dm1) = _minuteToHourMin(tWake - 10);
+    String morningDrinkTitle = "🌅 Morning Detox Drink in 10 mins";
+    String morningDrinkBody = "Start your day with 1 warm glass of Jeera water to boost digestion.";
+    if (morningDrink == 'lemon_ginger') {
+      morningDrinkTitle = "🍋 Lemon-Ginger Water in 10 mins";
+      morningDrinkBody = "Warm lemon-ginger water to activate digestion and immunity.";
+    } else if (morningDrink == 'saunf') {
+      morningDrinkTitle = "🌿 Saunf Water in 10 mins";
+      morningDrinkBody = "Cooling saunf water to soothe digestion and beat bloating.";
+    } else if (morningDrink == 'ajwain') {
+      morningDrinkTitle = "✨ Ajwain-Methi Water in 10 mins";
+      morningDrinkBody = "Warm ajwain water to boost insulin sensitivity and fat burn.";
+    } else if (morningDrink == 'cinnamon') {
+      morningDrinkTitle = "🪵 Cinnamon Warm Water in 10 mins";
+      morningDrinkBody = "Warm cinnamon water to stabilize blood sugar and cravings.";
+    }
+
     await _scheduleDailyNotification(
       id: 101,
-      hour: 5,
-      minute: 50,
-      title: "🌅 Morning Hydration in 10 mins",
-      body: "Start your day with 1 warm glass of Jeera water to boost digestion.",
+      hour: dh1,
+      minute: dm1,
+      title: morningDrinkTitle,
+      body: morningDrinkBody,
       channelId: taskChannelId,
       channelName: taskChannelName,
       channelDesc: taskChannelDesc,
     );
 
-    // Timetable 11:00 (Black Coffee / Green / Lemon Tea) -> Nudge at 10:50
+    // Midday Drink (10 mins before ~5h post wake-up)
+    final (dh2, dm2) = _minuteToHourMin(tWake + 290);
+    String middayTitle = "☕ Green Tea / Coffee in 10 mins";
+    String middayBody = "Time for your metabolism boost! No sugar, no milk.";
+    if (middayDrink == 'black_coffee') {
+      middayTitle = "☕ Black Coffee in 10 mins";
+      middayBody = "Time for your zero-calorie caffeine & focus boost.";
+    } else if (middayDrink == 'lemon_tea') {
+      middayTitle = "🍋 Warm Lemon Tea in 10 mins";
+      middayBody = "Refreshing antioxidant lemon tea break without milk/sugar.";
+    } else if (middayDrink == 'buttermilk') {
+      middayTitle = "🥛 Spiced Chaas (Buttermilk) in 10 mins";
+      middayBody = "Chilled gut-friendly probiotic hydration.";
+    }
+
     await _scheduleDailyNotification(
       id: 102,
-      hour: 10,
-      minute: 50,
-      title: "☕ Green Tea / Coffee in 10 mins",
-      body: "Time for your metabolism boost! Black coffee or green/lemon tea (no sugar, no milk).",
+      hour: dh2,
+      minute: dm2,
+      title: middayTitle,
+      body: middayBody,
       channelId: taskChannelId,
       channelName: taskChannelName,
       channelDesc: taskChannelDesc,
     );
 
-    // Timetable 16:00 / 16:30 (Snack & Lemon Tea) -> Nudge at 15:50
+    // Evening Snack & Tea (10 mins before ~10h post wake-up)
+    final (dh3, dm3) = _minuteToHourMin(tWake + 590);
     await _scheduleDailyNotification(
       id: 103,
-      hour: 15,
-      minute: 50,
+      hour: dh3,
+      minute: dm3,
       title: "🍵 Evening Green Tea & Snack in 10 mins",
-      body: "Prepare your light afternoon roasted chana / makhana + green/lemon tea.",
+      body: "Prepare your light roasted chana / makhana + green or lemon tea.",
       channelId: taskChannelId,
       channelName: taskChannelName,
       channelDesc: taskChannelDesc,
@@ -233,11 +288,12 @@ class NotificationService {
     // -------------------------------------------------------------
     // 2. MEAL PREPARATION & MEAL NUDGES (30 mins before timetable)
     // -------------------------------------------------------------
-    // Breakfast Prep & Eat (Timetable 07:45 / 08:30) -> Nudge at 07:15
+    // Breakfast Prep & Eat (30 mins before ~1h 45m post wake-up)
+    final (mh1, mm1) = _minuteToHourMin(tWake + 75);
     await _scheduleDailyNotification(
       id: 201,
-      hour: 7,
-      minute: 15,
+      hour: mh1,
+      minute: mm1,
       title: "🍳 Breakfast Prep in 30 mins",
       body: "Get your high-protein veg breakfast ready! Remember: eat your protein first.",
       channelId: taskChannelId,
@@ -245,11 +301,12 @@ class NotificationService {
       channelDesc: taskChannelDesc,
     );
 
-    // Mid-morning Fruit (Timetable 11:30) -> Nudge at 11:15
+    // Mid-morning Fruit (15 mins before ~5h 30m post wake-up)
+    final (mh2, mm2) = _minuteToHourMin(tWake + 315);
     await _scheduleDailyNotification(
       id: 202,
-      hour: 11,
-      minute: 15,
+      hour: mh2,
+      minute: mm2,
       title: "🍎 Fresh Fruit Break in 15 mins",
       body: "Grab 1 fresh whole fruit (Apple, Pear, Orange, Papaya) for natural fiber.",
       channelId: taskChannelId,
@@ -257,11 +314,12 @@ class NotificationService {
       channelDesc: taskChannelDesc,
     );
 
-    // Lunch Prep & Meal (Timetable 13:00) -> Nudge at 12:30 (30 mins before)
+    // Lunch Prep & Meal (30 mins before ~7h post wake-up)
+    final (mh3, mm3) = _minuteToHourMin(tWake + 390);
     await _scheduleDailyNotification(
       id: 203,
-      hour: 12,
-      minute: 30,
+      hour: mh3,
+      minute: mm3,
       title: "🥗 Lunch Prep in 30 mins",
       body: "Time to prep lunch! Golden Rule: Big fresh salad & protein first, rice last.",
       channelId: taskChannelId,
@@ -269,11 +327,27 @@ class NotificationService {
       channelDesc: taskChannelDesc,
     );
 
-    // Dinner Prep & Meal (Timetable 19:30) -> Nudge at 19:00 (30 mins before)
+    // Optional Power Nap (5 mins before ~8h post wake-up)
+    if (napDuration > 0) {
+      final (nh, nm) = _minuteToHourMin(tWake + 475);
+      await _scheduleDailyNotification(
+        id: 205,
+        hour: nh,
+        minute: nm,
+        title: "💤 Power Nap in 5 mins",
+        body: "Time for a $napDuration-min restorative nap to lower cortisol and recharge!",
+        channelId: taskChannelId,
+        channelName: taskChannelName,
+        channelDesc: taskChannelDesc,
+      );
+    }
+
+    // Dinner Prep & Meal (30 mins before ~13h 30m post wake-up)
+    final (mh4, mm4) = _minuteToHourMin(tWake + 780);
     await _scheduleDailyNotification(
       id: 204,
-      hour: 19,
-      minute: 0,
+      hour: mh4,
+      minute: mm4,
       title: "🍲 Dinner Prep in 30 mins",
       body: "Time for light evening dinner (Soup + Paneer/Soya). Zero carbs, roti or rice!",
       channelId: taskChannelId,
@@ -284,11 +358,12 @@ class NotificationService {
     // -------------------------------------------------------------
     // 3. WORKOUT & ACTIVITY NUDGES
     // -------------------------------------------------------------
-    // Fasted Walk (Timetable 06:15) -> Nudge at 06:05 (10 mins before)
+    // Fasted Walk (10 mins before ~15m post wake-up)
+    final (wh1, wm1) = _minuteToHourMin(tWake + 5);
     await _scheduleDailyNotification(
       id: 301,
-      hour: 6,
-      minute: 5,
+      hour: wh1,
+      minute: wm1,
       title: "🚶 Fasted Morning Walk in 10 mins",
       body: "Lace up your shoes for a 30-min steady fat-burning walk.",
       channelId: taskChannelId,
@@ -296,11 +371,12 @@ class NotificationService {
       channelDesc: taskChannelDesc,
     );
 
-    // Evening Walk (Timetable 18:00) -> Nudge at 17:45 (15 mins before)
+    // Evening Walk (15 mins before ~12h post wake-up)
+    final (wh2, wm2) = _minuteToHourMin(tWake + 705);
     await _scheduleDailyNotification(
       id: 302,
-      hour: 17,
-      minute: 45,
+      hour: wh2,
+      minute: wm2,
       title: "🌇 Evening Walk in 15 mins",
       body: "15–20 minutes evening walk to reach today's step count target.",
       channelId: taskChannelId,
@@ -309,159 +385,49 @@ class NotificationService {
     );
 
     // -------------------------------------------------------------
-    // 4. DAILY WATER GOAL INTERVAL NUDGES (Exact 12-Glass Schedule)
+    // 4. DAILY WATER GOAL INTERVAL NUDGES (Exact 12-Glass Dynamic Schedule)
     // -------------------------------------------------------------
-    // Glass 1: 07:00 AM
-    await _scheduleDailyNotification(
-      id: 401,
-      hour: 7,
-      minute: 0,
-      title: "💧 Glass 1/12 (Morning Kickstart)",
-      body: "Drink your 1st glass of water to wake up your metabolism and rehydrate!",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
+    int wakeWindow = tBed - tWake;
+    if (wakeWindow < 600) wakeWindow = 960; // 16 hrs fallback
 
-    // Glass 2: 08:15 AM
-    await _scheduleDailyNotification(
-      id: 402,
-      hour: 8,
-      minute: 15,
-      title: "💧 Glass 2/12 (Post-Breakfast Rehydrate)",
-      body: "Glass #2! Keep digestive fluids moving smoothly after breakfast.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
+    const waterGlassLabels = [
+      ("Morning Kickstart", "Drink your 1st glass to wake up metabolism and rehydrate!"),
+      ("Post-Breakfast Rehydrate", "Glass #2! Keep digestive fluids moving smoothly."),
+      ("Morning Energy", "Time for glass #3! Stay sharp and curb premature cravings."),
+      ("Mid-Morning Hydration", "Sip glass #4 now! 1 liter mark reached — keep going!"),
+      ("Pre-Lunch Satiety", "Drink glass #5 ~45m before lunch for appetite control."),
+      ("Halfway Mark - 1.75L!", "Glass #6! You are 50% through your daily water goal!"),
+      ("Afternoon Revive", "Defeat the 3 PM afternoon slump with crisp glass #7."),
+      ("Pre-Snack Refresh", "Glass #8! Drink a full glass before evening tea/snack."),
+      ("Pre-Workout / Walk", "Fuel your evening walk/workout with glass #9 stamina."),
+      ("Pre-Dinner Hydration", "Glass #10! Almost there — only 2 glasses left to 3.5L."),
+      ("Evening Hydration", "Penultimate glass #11! Smooth finish to daily intake."),
+      ("Daily Goal Complete!", "Final glass #12! Congratulations on crushing 3.5L today!"),
+    ];
 
-    // Glass 3: 09:30 AM
-    await _scheduleDailyNotification(
-      id: 403,
-      hour: 9,
-      minute: 30,
-      title: "💧 Glass 3/12 (Morning Energy)",
-      body: "Time for glass #3! Stay sharp, energized, and curb premature cravings.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 4: 10:45 AM
-    await _scheduleDailyNotification(
-      id: 404,
-      hour: 10,
-      minute: 45,
-      title: "💧 Glass 4/12 (Mid-Morning Hydration)",
-      body: "Sip glass #4 now! 1 liter mark reached — keep the momentum going.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 5: 12:00 PM
-    await _scheduleDailyNotification(
-      id: 405,
-      hour: 12,
-      minute: 0,
-      title: "💧 Glass 5/12 (Pre-Lunch Satiety)",
-      body: "Drink glass #5 ~45 mins before lunch for better appetite control and digestion.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 6: 01:45 PM
-    await _scheduleDailyNotification(
-      id: 406,
-      hour: 13,
-      minute: 45,
-      title: "💧 Glass 6/12 (Halfway Mark - 1.75L!)",
-      body: "Glass #6! You are 50% through your daily water goal. Great pace!",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 7: 03:00 PM
-    await _scheduleDailyNotification(
-      id: 407,
-      hour: 15,
-      minute: 0,
-      title: "💧 Glass 7/12 (Afternoon Revive)",
-      body: "Defeat the 3 PM afternoon slump with glass #7. Zero sugar, pure energy.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 8: 04:15 PM
-    await _scheduleDailyNotification(
-      id: 408,
-      hour: 16,
-      minute: 15,
-      title: "💧 Glass 8/12 (Pre-Snack Refresh)",
-      body: "Glass #8! Drink a full glass of water before your evening snack and tea.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 9: 05:30 PM
-    await _scheduleDailyNotification(
-      id: 409,
-      hour: 17,
-      minute: 30,
-      title: "💧 Glass 9/12 (Pre-Workout / Walk)",
-      body: "Fuel your evening walk/workout with glass #9 for optimal stamina.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 10: 07:00 PM
-    await _scheduleDailyNotification(
-      id: 410,
-      hour: 19,
-      minute: 0,
-      title: "💧 Glass 10/12 (Pre-Dinner Hydration)",
-      body: "Glass #10! Almost there — only 2 glasses left to conquer your 3.5L goal.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 11: 08:15 PM
-    await _scheduleDailyNotification(
-      id: 411,
-      hour: 20,
-      minute: 15,
-      title: "💧 Glass 11/12 (Evening Hydration)",
-      body: "Penultimate glass #11! Smooth finish to your daily water intake.",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
-
-    // Glass 12: 09:30 PM
-    await _scheduleDailyNotification(
-      id: 412,
-      hour: 21,
-      minute: 30,
-      title: "🎉 Glass 12/12 (Daily Goal Complete!)",
-      body: "Final glass #12! Congratulations on hitting your full 3.5L water target today!",
-      channelId: waterChannelId,
-      channelName: waterChannelName,
-      channelDesc: waterChannelDesc,
-    );
+    for (int i = 0; i < 12; i++) {
+      final targetMinute = tWake + ((wakeWindow * (i + 0.5)) ~/ 12);
+      final (waterH, waterM) = _minuteToHourMin(targetMinute);
+      await _scheduleDailyNotification(
+        id: 401 + i,
+        hour: waterH,
+        minute: waterM,
+        title: "💧 Glass ${i + 1}/12 (${waterGlassLabels[i].$1})",
+        body: waterGlassLabels[i].$2,
+        channelId: waterChannelId,
+        channelName: waterChannelName,
+        channelDesc: waterChannelDesc,
+      );
+    }
 
     // -------------------------------------------------------------
-    // 5. NIGHTLY REVIEW & WEIGH-IN PREP (21:45)
+    // 5. NIGHTLY REVIEW & WEIGH-IN PREP (45 mins before bedtime)
     // -------------------------------------------------------------
+    final (nh, nm) = _minuteToHourMin(tBed - 45);
     await _scheduleDailyNotification(
       id: 501,
-      hour: 21,
-      minute: 45,
+      hour: nh,
+      minute: nm,
       title: "🌙 Daily Roadmap Check",
       body: "Great job today! Make sure all tasks are checked off before sleep. Ready for tomorrow!",
       channelId: taskChannelId,

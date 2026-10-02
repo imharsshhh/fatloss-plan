@@ -1,3 +1,5 @@
+import 'custom_plan.dart';
+
 class WeightEntry {
   final String date;
   final double weight;
@@ -26,6 +28,7 @@ class UserPlan {
   final Map<String, int> done; // e.g. "1:0": 1
   final Map<String, int> water; // e.g. "1": 8
   final List<WeightEntry> wts;
+  final CustomPlan? customPlan;
 
   UserPlan({
     required this.uid,
@@ -39,6 +42,7 @@ class UserPlan {
     required this.done,
     required this.water,
     required this.wts,
+    this.customPlan,
   });
 
   factory UserPlan.fromMap(String uid, Map<String, dynamic> map) {
@@ -59,6 +63,11 @@ class UserPlan {
         .map((e) => WeightEntry.fromMap(Map<String, dynamic>.from(e as Map)))
         .toList();
 
+    final customPlanMap = map['customPlan'] as Map<String, dynamic>?;
+    final parsedCustomPlan = customPlanMap != null
+        ? CustomPlan.fromMap(customPlanMap)
+        : null;
+
     return UserPlan(
       uid: uid,
       name: map['name'] as String? ?? 'Member',
@@ -72,6 +81,7 @@ class UserPlan {
       done: parsedDone,
       water: parsedWater,
       wts: parsedWts,
+      customPlan: parsedCustomPlan,
     );
   }
 
@@ -87,6 +97,7 @@ class UserPlan {
       'done': done,
       'water': water,
       'wts': wts.map((e) => e.toMap()).toList(),
+      if (customPlan != null) 'customPlan': customPlan!.toMap(),
     };
   }
 

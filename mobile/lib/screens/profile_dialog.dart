@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/user_plan.dart';
 import '../services/firestore_service.dart';
 import '../services/notification_service.dart';
+import 'ai_customizer_dialog.dart';
 
 class ProfileDialog extends StatefulWidget {
   final UserPlan userPlan;
@@ -440,6 +441,29 @@ class _ProfileDialogState extends State<ProfileDialog> {
                 ),
               )
             else ...[
+              // AI Diet & Routine Customizer Button
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AiCustomizerDialog(userPlan: widget.userPlan),
+                  );
+                },
+                icon: const Icon(Icons.auto_awesome, size: 18),
+                label: const Text(
+                  "Customize Diet & Routine with AI",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF238B55),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+              ),
+              const SizedBox(height: 10),
+
               // Option 1: Change Start Date & Clear Records (Keep Account)
               OutlinedButton.icon(
                 onPressed: _changeStartDateAndReset,

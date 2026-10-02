@@ -657,6 +657,102 @@ button:disabled {
   font-size: 0.82rem;
 }
 
+.modal-box.modal-lg {
+  max-width: 660px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 24px 22px;
+}
+.custom-section {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.custom-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.custom-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .custom-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.chip-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip-btn:hover {
+  border-color: var(--leaf);
+  transform: translateY(-1px);
+}
+.chip-btn.selected {
+  background: var(--leaf);
+  color: #ffffff;
+  border-color: var(--leaf);
+  box-shadow: 0 2px 8px var(--leaf-glow);
+  font-weight: 600;
+}
+.preview-card {
+  background: var(--card);
+  border: 1px dashed var(--leaf);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 0.84rem;
+}
+.preview-badge {
+  display: inline-block;
+  background: var(--leaf-light);
+  color: var(--leaf);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+.badge-custom-plan {
+  background: linear-gradient(135deg, rgba(35, 139, 85, 0.15), rgba(62, 199, 133, 0.25));
+  color: var(--leaf);
+  border: 1px solid var(--leaf);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -784,6 +880,10 @@ button:disabled {
     </div>
 
     <div style="display:flex; flex-direction:column; gap:10px;">
+      <!-- Option: AI Diet & Routine Customizer -->
+      <button id="btnOpenAiCustomizerProf" style="width:100%; padding:11px; background:linear-gradient(135deg, rgba(35,139,85,0.12), rgba(62,199,133,0.18)); border:1.5px solid var(--leaf); color:var(--leaf); display:flex; align-items:center; justify-content:center; gap:6px; font-weight:700; border-radius:10px; cursor:pointer;">
+        ✨ Customize Diet & Routine with AI
+      </button>
       <!-- Option 1: Keep Account & Reset Data / Change Date -->
       <button id="btnOpenResetDate" style="width:100%; padding:10px; border-color:var(--leaf); color:var(--leaf); display:flex; align-items:center; justify-content:center; gap:6px; font-weight:600;">
         🔄 Change Start Date & Reset Data
@@ -825,6 +925,101 @@ button:disabled {
   </div>
 </div>
 
+<!-- Modal: AI Diet & Routine Customizer -->
+<div id="aiCustomizerModal" class="modal-overlay hidden">
+  <div class="modal-box modal-lg">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div>
+        <h3 class="modal-title" style="margin:0; font-size:1.35rem;">✨ AI Diet & Routine Customizer</h3>
+        <div class="modal-subtitle" style="margin:0; font-size:0.85rem;">Personalize wake/bed hours, nap habit, drinks & vegetarian ingredients</div>
+      </div>
+      <button id="btnCloseAiCustomizer" style="padding:5px 9px; border-radius:8px;">✕</button>
+    </div>
+
+    <!-- Section 1: Routine & Power Nap -->
+    <div class="custom-section">
+      <div class="custom-section-title">⏰ Daily Routine & Sleep Schedule</div>
+      <div class="custom-grid-2">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label for="aiWakeUpTime">🌅 Wake-Up Time</label>
+          <input type="time" id="aiWakeUpTime" value="06:00">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label for="aiBedTime">😴 Bed Time</label>
+          <input type="time" id="aiBedTime" value="23:00">
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">💤 Afternoon Rest / Power Nap</label>
+        <div class="chips-container" id="napChips"></div>
+      </div>
+    </div>
+
+    <!-- Section 2: Morning & Midday Drinks -->
+    <div class="custom-section">
+      <div class="custom-section-title">🍵 Daily Detox & Hydration Drinks</div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">🌅 Morning Detox Drink (Empty Stomach)</label>
+        <div class="chips-container" id="morningDrinkChips"></div>
+      </div>
+      <div>
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">☕ Mid-Day Metabolism Drink (11:00 AM)</label>
+        <div class="chips-container" id="middayDrinkChips"></div>
+      </div>
+    </div>
+
+    <!-- Section 3: Dietary Preferences -->
+    <div class="custom-section">
+      <div class="custom-section-title">🥗 Vegetarian Diet & Food Selection</div>
+      
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">🧀 Preferred Vegetarian Proteins (Multi-select)</label>
+        <div class="chips-container" id="proteinChips"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">🥬 Preferred Healthy Vegetables (Multi-select)</label>
+        <div class="chips-container" id="veggieChips"></div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">🌾 Preferred Grains & Smart Carbs (Multi-select)</label>
+        <div class="chips-container" id="grainChips"></div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; color:var(--ink);">🥜 Low-Calorie Evening Snacks (Multi-select)</label>
+        <div class="chips-container" id="snackChips"></div>
+      </div>
+    </div>
+
+    <!-- Preview Container (if synthesized) -->
+    <div id="aiPlanPreviewBox" class="preview-card hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="preview-badge">✨ AI Plan Synthesized</span>
+        <small id="aiPlanTimestamp" class="note"></small>
+      </div>
+      <div id="aiPlanPreviewContent" style="margin-top:6px; line-height:1.45;"></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+      <button type="button" id="btnSynthesizePlan" class="btn-primary" style="padding:12px; font-size:0.95rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+        🤖 Synthesize AI Plan with My Preferences
+      </button>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+        <button type="button" id="btnResetAiPlan" style="padding:10px; color:var(--mute); border-color:var(--line);">
+          🔄 Revert to Default Plan
+        </button>
+        <button type="button" id="btnSaveAiPlan" class="btn-primary" style="padding:10px; background:linear-gradient(135deg, #10b981, #059669);" disabled>
+          💾 Save & Apply Plan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main Application Dashboard -->
 <main id="mainApp">
   <!-- Top Navigation Bar -->
@@ -840,6 +1035,9 @@ button:disabled {
 
     <div class="nav-controls">
       <div class="sync-status" id="syncStatus">🟢 Cloud Synced</div>
+      <button id="btnOpenAiCustomizerNav" title="Customize Diet & Routine with AI" class="badge-custom-plan" style="cursor:pointer; padding:6px 12px; font-size:0.82rem; border-radius:var(--radius-sm); border:1px solid var(--leaf);">
+        ✨ AI Plan
+      </button>
       <button id="prev" aria-label="Previous day">‹</button>
       <input type="date" id="pick" aria-label="Jump to date" style="background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 10px; color:var(--ink);">
       <button id="nxt" aria-label="Next day">›</button>
@@ -903,8 +1101,11 @@ button:disabled {
 
   <!-- Today's Meal & Workout Schedule -->
   <section class="card" style="margin-bottom:16px">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <h2 style="margin:0; font-size:1.15rem; font-weight:700;">🍽️ Daily Nutrition & Activity Schedule</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h2 style="margin:0; font-size:1.15rem; font-weight:700;">🍽️ Daily Nutrition & Activity Schedule</h2>
+        <span id="aiPlanActiveBadge" class="badge-custom-plan hidden" style="font-size:0.72rem; padding:2px 8px;">✨ AI Custom Plan</span>
+      </div>
       <span class="note">Tap a card to mark as completed</span>
     </div>
     <div class="tiles" id="tl"></div>
@@ -971,7 +1172,84 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Nutrition & Workout Data Repository
+// AI Customizer Constants & Option Definitions
+const AI_PROTEIN_OPTIONS = [
+  { id: 'paneer', name: 'Paneer (Cottage Cheese)', emoji: '🧀' },
+  { id: 'soya_chunks', name: 'Soya Chunks & Granules', emoji: '🌱' },
+  { id: 'moong_dal', name: 'Moong Dal & Chilla', emoji: '🥞' },
+  { id: 'sprouts', name: 'Moong & Chana Sprouts', emoji: '🥗' },
+  { id: 'besan', name: 'Besan (Gram Flour)', emoji: '🫓' },
+  { id: 'tofu', name: 'Tofu (Soy Paneer)', emoji: '🧊' },
+  { id: 'chana_chole', name: 'Chole / Chickpeas', emoji: '🧆' },
+  { id: 'rajma', name: 'Rajma (Kidney Beans)', emoji: '🍲' },
+  { id: 'curd_yogurt', name: 'Curd / Greek Yogurt', emoji: '🥣' }
+];
+
+const AI_VEGGIE_OPTIONS = [
+  { id: 'spinach_palak', name: 'Spinach / Palak', emoji: '🥬' },
+  { id: 'lauki', name: 'Lauki / Bottle Gourd', emoji: '🥒' },
+  { id: 'mushroom', name: 'Mushrooms', emoji: '🍄' },
+  { id: 'bell_peppers', name: 'Bell Peppers & Capsicum', emoji: '🫑' },
+  { id: 'broccoli', name: 'Broccoli', emoji: '🥦' },
+  { id: 'methi', name: 'Methi / Fenugreek', emoji: '🌿' },
+  { id: 'cucumber_tomato', name: 'Fresh Cucumber & Tomato', emoji: '🥗' },
+  { id: 'sweet_corn', name: 'Sweet Corn', emoji: '🌽' },
+  { id: 'pumpkin', name: 'Pumpkin / Kaddu', emoji: '🎃' }
+];
+
+const AI_GRAIN_OPTIONS = [
+  { id: 'oats', name: 'Rolled Oats', emoji: '🥣' },
+  { id: 'dalia', name: 'Broken Wheat / Dalia', emoji: '🌾' },
+  { id: 'brown_rice', name: 'Brown / White Rice (Portion-controlled)', emoji: '🍚' },
+  { id: 'poha', name: 'Veg Poha', emoji: '🥘' },
+  { id: 'quinoa', name: 'Quinoa', emoji: '🍲' },
+  { id: 'multigrain_bread', name: 'Brown / Multigrain Bread', emoji: '🥪' }
+];
+
+const AI_MORNING_DRINK_OPTIONS = [
+  { id: 'jeera', name: 'Warm Jeera Water', emoji: '🌅', desc: 'Digestive boost' },
+  { id: 'lemon_ginger', name: 'Warm Lemon-Ginger Water', emoji: '🍋', desc: 'Metabolism & immunity' },
+  { id: 'saunf', name: 'Warm Saunf (Fennel) Water', emoji: '🌿', desc: 'Cooling & gut-friendly' },
+  { id: 'ajwain', name: 'Warm Ajwain-Methi Water', emoji: '✨', desc: 'Bloat relief' },
+  { id: 'cinnamon', name: 'Warm Cinnamon Water', emoji: '🪵', desc: 'Craving suppressor' }
+];
+
+const AI_MIDDAY_DRINK_OPTIONS = [
+  { id: 'black_coffee', name: 'Black Coffee (No Milk/Sugar)', emoji: '☕', desc: 'Thermogenesis & focus' },
+  { id: 'green_tea', name: 'Green Tea / Lemon Tea', emoji: '🍵', desc: 'Antioxidants & fat burn' },
+  { id: 'lemon_tea', name: 'Warm Lemon Tea (No Sugar)', emoji: '🍋', desc: 'Zero caffeine' },
+  { id: 'buttermilk', name: 'Chilled Spiced Buttermilk (Chaas)', emoji: '🥛', desc: 'Probiotic & cooling' }
+];
+
+const AI_SNACK_OPTIONS = [
+  { id: 'roasted_makhana', name: 'Roasted Makhana', emoji: '🍿' },
+  { id: 'roasted_chana', name: 'Roasted Chana (30g)', emoji: '🥜' },
+  { id: 'sprouts_chaat', name: 'Lemon Sprouts Chaat', emoji: '🥗' },
+  { id: 'almonds_walnuts', name: 'Soaked Almonds & Walnuts', emoji: '🌰' },
+  { id: 'cucumber_carrot', name: 'Cucumber & Carrot Sticks', emoji: '🥕' },
+  { id: 'fruit_bowl', name: 'Fresh Fruit Bowl', emoji: '🍓' }
+];
+
+const AI_NAP_OPTIONS = [
+  { val: 0, label: 'No Nap' },
+  { val: 20, label: '20 min Power Nap' },
+  { val: 30, label: '30 min Rest' },
+  { val: 45, label: '45 min Deep Nap' }
+];
+
+const DEFAULT_PLAN_PREFERENCES = {
+  wakeUpTime: "06:00",
+  bedTime: "23:00",
+  napDuration: 20,
+  morningDrink: "jeera",
+  middayDrink: "black_coffee",
+  proteins: ["paneer", "soya_chunks", "moong_dal", "sprouts", "besan", "curd_yogurt"],
+  veggies: ["spinach_palak", "lauki", "mushroom", "bell_peppers", "broccoli", "cucumber_tomato"],
+  grains: ["oats", "dalia", "brown_rice", "poha"],
+  snacks: ["roasted_makhana", "roasted_chana", "sprouts_chaat", "almonds_walnuts"]
+};
+
+// Default Nutrition & Workout Data Repository
 const A = [
   ["2 moong dal chilla + mint chutney", "Apple", "Big salad first, then 1 katori dal, ¾ cup rice, stir-fried veggies", "Roasted chana (30 g)", "Tomato soup + 100 g paneer bhurji"],
   ["Sprouts salad (1 bowl) + buttermilk", "Orange", "Salad, soya chunk curry (30 g dry), ¾ cup rice", "Cucumber + carrot sticks", "Mixed veg soup + sprouts chaat"],
@@ -1004,7 +1282,7 @@ const $ = id => document.getElementById(id);
 let currentUser = null;
 let userDocData = null;
 let unsubscribeDoc = null;
-let S = { start: new Date().toISOString().slice(0, 10), done: {}, water: {}, wts: [] };
+let S = { start: new Date().toISOString().slice(0, 10), done: {}, water: {}, wts: [], customPlan: null };
 
 const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const dateOf = n => {
@@ -1012,46 +1290,215 @@ const dateOf = n => {
   d.setDate(d.getDate() + n - 1);
   return d;
 };
-const hm = s => { const [a, b] = s.split(":"); return +a * 60 + +b; };
-const f12 = s => { let [h, m] = s.split(":"); h = +h; return (h % 12 || 12) + ":" + m + (h >= 12 ? " PM" : " AM"); };
+const hm = s => {
+  if (!s || typeof s !== 'string') return 360;
+  const [a, b] = s.split(":");
+  return (+a * 60) + (+b || 0);
+};
+const minToHm = m => {
+  const norm = (m % 1440 + 1440) % 1440;
+  const h = Math.floor(norm / 60).toString().padStart(2, '0');
+  const min = (norm % 60).toString().padStart(2, '0');
+  return `${h}:${min}`;
+};
+const f12 = s => {
+  if (!s) return "12:00 AM";
+  let [h, m] = s.split(":");
+  h = +h;
+  return (h % 12 || 12) + ":" + m + (h >= 12 ? " PM" : " AM");
+};
 const fruitEm = t => /orange/i.test(t) ? "🍊" : /apple/i.test(t) ? "🍎" : /pear/i.test(t) ? "🍐" : /banana/i.test(t) ? "🍌" : /watermelon/i.test(t) ? "🍉" : /guava|papaya/i.test(t) ? "🥭" : "🍎";
 const bfEm = t => /chilla|cheela/i.test(t) ? "🥞" : /sandwich/i.test(t) ? "🥪" : /idli/i.test(t) ? "🍙" : "🥣";
 const snEm = t => /almond/i.test(t) ? "🌰" : /sprout/i.test(t) ? "🌱" : /cucumber|carrot/i.test(t) ? "🥕" : /fruit/i.test(t) ? "🍓" : "🥜";
 const dnEm = t => /paneer/i.test(t) ? "🧀" : "🍲";
 
+// Synthesize 14-day rotational custom plan
+function synthesizeAiPlan(prefs) {
+  const hasPaneer = (prefs.proteins || []).includes('paneer');
+  const hasSoya = (prefs.proteins || []).includes('soya_chunks');
+  const hasMoong = (prefs.proteins || []).includes('moong_dal');
+  const hasSprouts = (prefs.proteins || []).includes('sprouts');
+  const hasBesan = (prefs.proteins || []).includes('besan');
+  const hasTofu = (prefs.proteins || []).includes('tofu');
+  const hasOats = (prefs.grains || []).includes('oats');
+  const hasDalia = (prefs.grains || []).includes('dalia');
+  const hasPoha = (prefs.grains || []).includes('poha');
+  const hasBread = (prefs.grains || []).includes('multigrain_bread');
+
+  const breakfastPool = [];
+  if (hasMoong) breakfastPool.push("2 moong dal chilla + mint chutney");
+  if (hasBesan && hasPaneer) breakfastPool.push("2 paneer-stuffed besan chilla");
+  if (hasBesan) breakfastPool.push("2 besan chilla + ½ cup curd");
+  if (hasOats && hasSoya) breakfastPool.push("Veg oats (½ cup) with soya granules");
+  if (hasOats) breakfastPool.push("2 oats chilla + ½ cup curd");
+  if (hasSprouts) breakfastPool.push("Sprouts salad (1 bowl) + buttermilk");
+  if (hasBread && hasPaneer) breakfastPool.push("Paneer-veg sandwich (2 brown bread)");
+  if (hasBread && hasTofu) breakfastPool.push("Grilled tofu sandwich (2 brown bread)");
+  if (hasDalia) breakfastPool.push("Veg dalia (1 bowl) + moong sprouts");
+  if (hasPoha) breakfastPool.push("Veg poha with roasted peanuts (1 cup) + curd");
+  if (hasSoya) breakfastPool.push("Veg upma with soya granules (1 bowl)");
+  if (breakfastPool.length === 0) {
+    breakfastPool.push(
+      "2 moong dal chilla + mint chutney",
+      "Sprouts salad (1 bowl) + buttermilk",
+      "2 besan chilla + ½ cup curd",
+      "Veg oats with soya granules",
+      "Paneer-veg sandwich (2 brown bread)",
+      "3 idli + sambar",
+      "Veg dalia (1 bowl) + moong sprouts"
+    );
+  }
+
+  const fruitPool = [
+    "Apple",
+    "Orange",
+    "Guava or papaya",
+    "Pear or apple",
+    "Watermelon or papaya",
+    "Sweet orange / kiwi",
+    "Small banana or peach"
+  ];
+
+  const lunchPool = [];
+  if (hasPaneer) lunchPool.push("Salad first, paneer bhurji (100 g), ¾ cup rice, stir-fried veggies");
+  if (hasSoya) lunchPool.push("Salad, soya chunk curry (30 g dry), ¾ cup rice");
+  if (hasSoya) lunchPool.push("Salad, soya pulao (30 g soya, ¾ cup rice), cucumber raita");
+  lunchPool.push("Salad, rajma/chana (1 katori), ¾ cup rice");
+  lunchPool.push("Salad, dal + lauki/tinda sabzi, ¾ cup rice");
+  lunchPool.push("Salad, chole (1 katori), ¾ cup rice");
+  lunchPool.push("Salad, chana dal tadka, ¾ cup rice, bhindi/capsicum sabzi");
+  if (hasTofu) lunchPool.push("Salad, stir-fried tofu veggies (100 g), ¾ cup rice");
+
+  const snackPool = [];
+  if ((prefs.snacks || []).includes('roasted_chana')) snackPool.push("Roasted chana (30 g)");
+  if ((prefs.snacks || []).includes('roasted_makhana')) snackPool.push("Roasted makhana (1 cup)");
+  if ((prefs.snacks || []).includes('sprouts_chaat')) snackPool.push("Sprouts chaat (½ bowl)");
+  if ((prefs.snacks || []).includes('almonds_walnuts')) snackPool.push("5 soaked almonds & walnuts");
+  if ((prefs.snacks || []).includes('cucumber_carrot')) snackPool.push("Cucumber + carrot sticks with hummus");
+  if ((prefs.snacks || []).includes('fruit_bowl')) snackPool.push("Small mixed fruit bowl");
+  if (snackPool.length === 0) {
+    snackPool.push("Roasted chana (30 g)", "Roasted makhana", "Sprouts chaat", "5 almonds");
+  }
+
+  const dinnerPool = [];
+  if (hasPaneer) dinnerPool.push("Tomato soup + 100 g paneer bhurji (No carbs)");
+  if (hasPaneer) dinnerPool.push("Palak soup + grilled paneer 80 g (No carbs)");
+  if (hasPaneer) dinnerPool.push("Mushroom/tomato soup + air-fried paneer tikka");
+  if (hasSoya) dinnerPool.push("Clear veg soup + 2 soya tikki (air-fried)");
+  if (hasSoya) dinnerPool.push("Pumpkin soup + soya chunk stir-fry");
+  if (hasSprouts) dinnerPool.push("Mixed veg soup + sprouts chaat");
+  if (hasTofu) dinnerPool.push("Sweet corn veg soup + grilled tofu & broccoli");
+  if (dinnerPool.length === 0) {
+    dinnerPool.push(
+      "Tomato soup + 100 g paneer bhurji",
+      "Mixed veg soup + sprouts chaat",
+      "Palak soup + grilled paneer 80 g",
+      "Clear veg soup + 2 soya tikki (air-fried)",
+      "Sweet corn veg soup + moong sprouts salad",
+      "Mushroom/tomato soup + air-fried paneer tikka",
+      "Pumpkin soup + soya chunk stir-fry"
+    );
+  }
+
+  const planA = [];
+  for (let i = 0; i < 7; i++) {
+    planA.push([
+      breakfastPool[i % breakfastPool.length],
+      fruitPool[i % fruitPool.length],
+      lunchPool[i % lunchPool.length],
+      snackPool[i % snackPool.length],
+      dinnerPool[i % dinnerPool.length]
+    ]);
+  }
+
+  const planB = [];
+  for (let i = 0; i < 7; i++) {
+    const bIdx = (i + 3) % breakfastPool.length;
+    const fIdx = (i + 2) % fruitPool.length;
+    const lIdx = (i + 4) % lunchPool.length;
+    const sIdx = (i + 1) % snackPool.length;
+    const dIdx = (i + 3) % dinnerPool.length;
+    planB.push([
+      breakfastPool[bIdx],
+      fruitPool[fIdx],
+      lunchPool[lIdx],
+      snackPool[sIdx],
+      dinnerPool[dIdx]
+    ]);
+  }
+
+  return {
+    preferences: prefs,
+    planA,
+    planB,
+    generatedAt: new Date().toISOString()
+  };
+}
+
+// Build Dynamic Daily Schedule relative to wakeUpTime and bedTime
 function build(n) {
-  const d = dateOf(n), wd = d.getDay(), w = Math.ceil(n / 7), mi = (wd + 6) % 7, M = (w % 2 ? A : B)[mi], wk = wd > 0 && wd < 6, sat = wd === 6;
+  const d = dateOf(n), wd = d.getDay(), w = Math.ceil(n / 7), mi = (wd + 6) % 7, wk = wd > 0 && wd < 6, sat = wd === 6;
+  const customPlan = S.customPlan || (userDocData && userDocData.customPlan);
+  const planSourceA = (customPlan && customPlan.planA) || A;
+  const planSourceB = (customPlan && customPlan.planB) || B;
+  const M = (w % 2 ? planSourceA : planSourceB)[mi % 7];
+  
   const sw = w <= 2 ? S1 : w <= 4 ? S2 : S3, mins = w <= 2 ? 20 : w <= 4 ? 28 : w <= 6 ? 30 : 35;
   const str = wd === 1 || wd === 3 || wd === 5;
-  
-  const L = [["06:00", "Wake up", "Jeera water, 1 glass", "Start of your eating-window clock.", "x", "🌅"]];
+
+  const prefs = (customPlan && customPlan.preferences) || DEFAULT_PLAN_PREFERENCES;
+  const tWake = hm(prefs.wakeUpTime || "06:00");
+  const tBed = hm(prefs.bedTime || "23:00");
+  const napDuration = parseInt(prefs.napDuration !== undefined ? prefs.napDuration : 20, 10);
+
+  let morningDrinkTitle = "Warm Jeera water, 1 glass";
+  let morningDrinkEmoji = "🌅";
+  if (prefs.morningDrink === 'lemon_ginger') { morningDrinkTitle = "Warm Lemon-Ginger water, 1 glass"; morningDrinkEmoji = "🍋"; }
+  else if (prefs.morningDrink === 'saunf') { morningDrinkTitle = "Warm Saunf (Fennel) water, 1 glass"; morningDrinkEmoji = "🌿"; }
+  else if (prefs.morningDrink === 'ajwain') { morningDrinkTitle = "Warm Ajwain-Methi water, 1 glass"; morningDrinkEmoji = "✨"; }
+  else if (prefs.morningDrink === 'cinnamon') { morningDrinkTitle = "Warm Cinnamon water, 1 glass"; morningDrinkEmoji = "🪵"; }
+
+  let middayDrinkTitle = "Green tea or lemon tea";
+  let middayDrinkEmoji = "🍵";
+  if (prefs.middayDrink === 'black_coffee') { middayDrinkTitle = "Black coffee (no milk, no sugar)"; middayDrinkEmoji = "☕"; }
+  else if (prefs.middayDrink === 'lemon_tea') { middayDrinkTitle = "Warm lemon tea (no sugar)"; middayDrinkEmoji = "🍋"; }
+  else if (prefs.middayDrink === 'buttermilk') { middayDrinkTitle = "Chilled spiced buttermilk (chaas)"; middayDrinkEmoji = "🥛"; }
+
+  const L = [[minToHm(tWake), "Wake up", morningDrinkTitle, "Start of your eating-window clock.", "x", morningDrinkEmoji]];
+
   if (wk) {
-    L.push(["06:15", "Fasted walk", "30 minutes", "Easy pace, no running.", "w", "🚶"]);
-    L.push(["06:45", str ? "Strength" : "Yoga", str ? mins + " min" : "20 min stretching", str ? sw : "Light stretching and breathing.", "k", str ? "🏋️" : "🧘"]);
-    L.push(["07:45", "Breakfast", M[0], "Protein first, then the rest.", "m", bfEm(M[0])]);
-    L.push(["11:00", "Coffee / lemon tea", "Black coffee or lemon tea", "No sugar, no milk. Max 2 coffees.", "x", "☕"]);
-    L.push(["11:30", "Fruit", M[1], "1 serving.", "m", fruitEm(M[1])]);
-    L.push(["13:00", "Lunch", M[2], "Salad and protein first, rice last.", "m", "🍛"]);
-    L.push(["13:20", "Walk", "10–15 minutes", "Helps digestion, adds steps.", "w", "🚶"]);
-    L.push(["16:00", "Snack", M[3] + " + lemon tea", "No sugar.", "m", snEm(M[3])]);
-    L.push(["18:00", "Evening walk", "15–20 minutes", "On the way home or at home.", "w", "🌇"]);
-    L.push(["19:30", "Dinner", M[4], "No roti, rice, fruit or namkeen.", "m", dnEm(M[4])]);
-    L.push(["20:00", "Slow walk", "10 minutes", "", "w", "👟"]);
+    L.push([minToHm(tWake + 15), "Fasted walk", "30 minutes", "Easy pace, no running.", "w", "🚶"]);
+    L.push([minToHm(tWake + 45), str ? "Strength" : "Yoga", str ? mins + " min" : "20 min stretching", str ? sw : "Light stretching and breathing.", "k", str ? "🏋️" : "🧘"]);
+    L.push([minToHm(tWake + 105), "Breakfast", M[0], "Protein first, then the rest.", "m", bfEm(M[0])]);
+    L.push([minToHm(tWake + 300), "Mid-day Drink", middayDrinkTitle, "No sugar, no milk. Pure metabolism boost.", "x", middayDrinkEmoji]);
+    L.push([minToHm(tWake + 330), "Fruit", M[1], "1 serving.", "m", fruitEm(M[1])]);
+    L.push([minToHm(tWake + 420), "Lunch", M[2], "Salad and protein first, rice last.", "m", "🍛"]);
+    L.push([minToHm(tWake + 440), "Walk", "10–15 minutes", "Helps digestion, adds steps.", "w", "🚶"]);
+    if (napDuration > 0) {
+      L.push([minToHm(tWake + 480), "Power Nap", `${napDuration} minutes restorative rest`, "Quick power nap to lower cortisol and recharge focus.", "s", "💤"]);
+    }
+    L.push([minToHm(tWake + 600), "Snack", M[3] + " + lemon tea", "No sugar.", "m", snEm(M[3])]);
+    L.push([minToHm(tWake + 720), "Evening walk", "15–20 minutes", "On the way home or at home.", "w", "🌇"]);
+    L.push([minToHm(tWake + 810), "Dinner", M[4], "No roti, rice, fruit or namkeen.", "m", dnEm(M[4])]);
+    L.push([minToHm(tWake + 840), "Slow walk", "10 minutes", "", "w", "👟"]);
   } else {
-    L.push(["06:15", sat ? "Fasted walk" : "Brisk walk / hike", sat ? "40 minutes" : "45–60 minutes", w >= 5 && sat ? "Add 5 × 1 min brisk intervals." : "Steady pace.", "w", "🚶"]);
-    L.push(["07:00", sat ? "Strength" : "Yoga", sat ? "30 min" : "20 min stretching", sat ? sw : "Stretch and relax.", "k", sat ? "🏋️" : "🧘"]);
-    L.push(["08:30", "Breakfast", M[0], "Protein first.", "m", bfEm(M[0])]);
-    L.push(["11:00", "Black coffee", "No sugar, no milk", "", "x", "☕"]);
-    L.push(["11:30", "Fruit", M[1], "1 serving.", "m", fruitEm(M[1])]);
-    L.push(["13:00", "Lunch", M[2], "Salad and protein first, rice last.", "m", "🍛"]);
-    L.push(["16:30", "Snack", M[3] + " + lemon tea", "No sugar.", "m", snEm(M[3])]);
-    L.push(sat ? ["17:30", "Evening walk", "30 minutes", "", "w", "🌇"] : ["17:30", "Meal prep", "Boil sprouts, make soup, soak soya", "Sets up the week.", "x", "🥘"]);
-    L.push(["19:30", "Dinner", M[4], "No roti, rice, fruit or namkeen.", "m", dnEm(M[4])]);
-    L.push(["20:00", "Slow walk", "10 minutes", "", "w", "👟"]);
+    L.push([minToHm(tWake + 15), sat ? "Fasted walk" : "Brisk walk / hike", sat ? "40 minutes" : "45–60 minutes", w >= 5 && sat ? "Add 5 × 1 min brisk intervals." : "Steady pace.", "w", "🚶"]);
+    L.push([minToHm(tWake + 60), sat ? "Strength" : "Yoga", sat ? "30 min" : "20 min stretching", sat ? sw : "Stretch and relax.", "k", sat ? "🏋️" : "🧘"]);
+    L.push([minToHm(tWake + 150), "Breakfast", M[0], "Protein first.", "m", bfEm(M[0])]);
+    L.push([minToHm(tWake + 300), "Mid-day Drink", middayDrinkTitle, "No sugar, no milk", "x", middayDrinkEmoji]);
+    L.push([minToHm(tWake + 330), "Fruit", M[1], "1 serving.", "m", fruitEm(M[1])]);
+    L.push([minToHm(tWake + 420), "Lunch", M[2], "Salad and protein first, rice last.", "m", "🍛"]);
+    if (napDuration > 0) {
+      L.push([minToHm(tWake + 480), "Weekend Nap", `${napDuration} minutes afternoon sleep`, "Rest and muscle recovery.", "s", "💤"]);
+    }
+    L.push([minToHm(tWake + 630), "Snack", M[3] + " + lemon tea", "No sugar.", "m", snEm(M[3])]);
+    L.push(sat ? [minToHm(tWake + 690), "Evening walk", "30 minutes", "", "w", "🌇"] : [minToHm(tWake + 690), "Meal prep", "Boil sprouts, make soup, soak soya", "Sets up the week.", "x", "🥘"]);
+    L.push([minToHm(tWake + 810), "Dinner", M[4], "No roti, rice, fruit or namkeen.", "m", dnEm(M[4])]);
+    L.push([minToHm(tWake + 840), "Slow walk", "10 minutes", "", "w", "👟"]);
   }
-  L.push(["21:00", "Lemon-honey water", "1 glass, 1 tsp honey max", "", "x", "🍋"]);
-  L.push(["22:15", "Wind down", "Phone off", "", "s", "📵"]);
-  L.push(["23:00", "Sleep", "About 7 hours", "Poor sleep slows fat loss.", "s", "😴"]);
+  L.push([minToHm(tBed - 60), "Lemon-honey / Saunf water", "1 warm glass, 1 tsp honey max", "Calming digestif before sleep.", "x", "🍋"]);
+  L.push([minToHm(tBed - 45), "Wind down", "Phone off, read or meditate", "Lower blue light exposure.", "s", "📵"]);
+  L.push([minToHm(tBed), "Sleep", "7–8 hours restorative sleep", "Poor sleep slows fat loss.", "s", "😴"]);
   return L;
 }
 
@@ -1102,6 +1549,12 @@ function render() {
   $("prog").style.width = (n / 60 * 100) + "%";
   $("ks").textContent = ST[w - 1] || "10k";
   $("kdate").textContent = "per day in Week " + w;
+
+  if (S.customPlan) {
+    $("aiPlanActiveBadge").classList.remove("hidden");
+  } else {
+    $("aiPlanActiveBadge").classList.add("hidden");
+  }
 
   const now = new Date(), nm = now.getHours() * 60 + now.getMinutes(), isT = n === t && iso(now) === iso(d);
   let ci = -1;
@@ -1409,6 +1862,183 @@ $("btnLogout").onclick = async () => {
   }
 };
 
+// AI Customizer State & UI Handling
+let currentPrefs = JSON.parse(JSON.stringify(DEFAULT_PLAN_PREFERENCES));
+let pendingCustomPlan = null;
+
+function renderChips(containerId, options, selectedValues, isSingle = false) {
+  const container = $(containerId);
+  if (!container) return;
+  container.innerHTML = options.map(opt => {
+    const isSelected = isSingle ? selectedValues === (opt.id !== undefined ? opt.id : opt.val) : (selectedValues || []).includes(opt.id !== undefined ? opt.id : opt.val);
+    const val = opt.id !== undefined ? opt.id : opt.val;
+    const label = (opt.emoji ? `${opt.emoji} ` : "") + (opt.name || opt.label);
+    return `<button type="button" class="chip-btn ${isSingle ? 'single-choice' : ''} ${isSelected ? 'selected' : ''}" data-val="${val}">
+      ${label}
+    </button>`;
+  }).join("");
+}
+
+function openAiCustomizer() {
+  const activePlan = S.customPlan || (userDocData && userDocData.customPlan);
+  currentPrefs = activePlan && activePlan.preferences 
+    ? JSON.parse(JSON.stringify(activePlan.preferences)) 
+    : JSON.parse(JSON.stringify(DEFAULT_PLAN_PREFERENCES));
+  pendingCustomPlan = activePlan || null;
+
+  $("aiWakeUpTime").value = currentPrefs.wakeUpTime || "06:00";
+  $("aiBedTime").value = currentPrefs.bedTime || "23:00";
+
+  renderChips("napChips", AI_NAP_OPTIONS, currentPrefs.napDuration !== undefined ? currentPrefs.napDuration : 20, true);
+  renderChips("morningDrinkChips", AI_MORNING_DRINK_OPTIONS, currentPrefs.morningDrink || "jeera", true);
+  renderChips("middayDrinkChips", AI_MIDDAY_DRINK_OPTIONS, currentPrefs.middayDrink || "black_coffee", true);
+  renderChips("proteinChips", AI_PROTEIN_OPTIONS, currentPrefs.proteins || []);
+  renderChips("veggieChips", AI_VEGGIE_OPTIONS, currentPrefs.veggies || []);
+  renderChips("grainChips", AI_GRAIN_OPTIONS, currentPrefs.grains || []);
+  renderChips("snackChips", AI_SNACK_OPTIONS, currentPrefs.snacks || []);
+
+  if (activePlan) {
+    $("aiPlanPreviewBox").classList.remove("hidden");
+    $("aiPlanTimestamp").textContent = "Active Custom Plan";
+    $("aiPlanPreviewContent").innerHTML = `
+      <b>✨ Active 14-Day Plan Preview:</b><br>
+      • 🌅 <b>Wake/Bed:</b> ${f12(currentPrefs.wakeUpTime)} – ${f12(currentPrefs.bedTime)} (${currentPrefs.napDuration > 0 ? currentPrefs.napDuration + 'm nap' : 'No nap'})<br>
+      • 🍳 <b>Breakfast (Day 1):</b> ${activePlan.planA[0][0]}<br>
+      • 🥗 <b>Lunch (Day 1):</b> ${activePlan.planA[0][2]}<br>
+      • 🍲 <b>Dinner (Day 1):</b> ${activePlan.planA[0][4]}
+    `;
+    $("btnSaveAiPlan").disabled = false;
+  } else {
+    $("aiPlanPreviewBox").classList.add("hidden");
+    $("btnSaveAiPlan").disabled = true;
+  }
+
+  $("aiCustomizerModal").classList.remove("hidden");
+}
+
+function closeAiCustomizer() {
+  $("aiCustomizerModal").classList.add("hidden");
+}
+
+function setupSingleChipHandler(containerId, prefKey, isNumeric = false) {
+  $(containerId).onclick = e => {
+    const btn = e.target.closest(".chip-btn");
+    if (!btn) return;
+    const val = isNumeric ? parseInt(btn.dataset.val, 10) : btn.dataset.val;
+    currentPrefs[prefKey] = val;
+    renderChips(containerId, containerId === "napChips" ? AI_NAP_OPTIONS : (containerId === "morningDrinkChips" ? AI_MORNING_DRINK_OPTIONS : AI_MIDDAY_DRINK_OPTIONS), val, true);
+  };
+}
+
+function setupMultiChipHandler(containerId, options, prefKey) {
+  $(containerId).onclick = e => {
+    const btn = e.target.closest(".chip-btn");
+    if (!btn) return;
+    const val = btn.dataset.val;
+    currentPrefs[prefKey] = currentPrefs[prefKey] || [];
+    if (currentPrefs[prefKey].includes(val)) {
+      if (currentPrefs[prefKey].length > 1) {
+        currentPrefs[prefKey] = currentPrefs[prefKey].filter(x => x !== val);
+      } else {
+        alert("Please keep at least one choice selected.");
+        return;
+      }
+    } else {
+      currentPrefs[prefKey].push(val);
+    }
+    renderChips(containerId, options, currentPrefs[prefKey]);
+  };
+}
+
+$("btnOpenAiCustomizerNav").onclick = openAiCustomizer;
+$("btnOpenAiCustomizerProf").onclick = () => {
+  $("profileModal").classList.add("hidden");
+  openAiCustomizer();
+};
+$("btnCloseAiCustomizer").onclick = closeAiCustomizer;
+
+setupSingleChipHandler("napChips", "napDuration", true);
+setupSingleChipHandler("morningDrinkChips", "morningDrink", false);
+setupSingleChipHandler("middayDrinkChips", "middayDrink", false);
+
+setupMultiChipHandler("proteinChips", AI_PROTEIN_OPTIONS, "proteins");
+setupMultiChipHandler("veggieChips", AI_VEGGIE_OPTIONS, "veggies");
+setupMultiChipHandler("grainChips", AI_GRAIN_OPTIONS, "grains");
+setupMultiChipHandler("snackChips", AI_SNACK_OPTIONS, "snacks");
+
+$("btnSynthesizePlan").onclick = () => {
+  const wake = $("aiWakeUpTime").value || "06:00";
+  const bed = $("aiBedTime").value || "23:00";
+  currentPrefs.wakeUpTime = wake;
+  currentPrefs.bedTime = bed;
+
+  const btn = $("btnSynthesizePlan");
+  btn.disabled = true;
+  btn.textContent = "⚙️ Synthesizing 14-day rotational recipes...";
+
+  setTimeout(() => {
+    pendingCustomPlan = synthesizeAiPlan(currentPrefs);
+    $("aiPlanPreviewBox").classList.remove("hidden");
+    $("aiPlanTimestamp").textContent = "Generated just now";
+    $("aiPlanPreviewContent").innerHTML = `
+      <b>✨ Generated 14-Day Plan Preview:</b><br>
+      • 🌅 <b>Wake/Bed:</b> ${f12(wake)} – ${f12(bed)} (${currentPrefs.napDuration > 0 ? currentPrefs.napDuration + 'm nap' : 'No nap'})<br>
+      • 🍳 <b>Breakfast (Day 1):</b> ${pendingCustomPlan.planA[0][0]}<br>
+      • 🥗 <b>Lunch (Day 1):</b> ${pendingCustomPlan.planA[0][2]}<br>
+      • 🍲 <b>Dinner (Day 1):</b> ${pendingCustomPlan.planA[0][4]}
+    `;
+    $("btnSaveAiPlan").disabled = false;
+    btn.disabled = false;
+    btn.textContent = "🤖 Re-Synthesize AI Plan";
+  }, 400);
+};
+
+$("btnSaveAiPlan").onclick = async () => {
+  if (!pendingCustomPlan || !currentUser) return;
+  const btn = $("btnSaveAiPlan");
+  btn.disabled = true;
+  btn.textContent = "Saving Plan...";
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, { customPlan: pendingCustomPlan });
+    S.customPlan = pendingCustomPlan;
+    render();
+    closeAiCustomizer();
+    alert("✨ Customized AI Diet & Routine Plan applied successfully!");
+  } catch (err) {
+    console.error("Error saving custom plan:", err);
+    alert("Could not save custom plan: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "💾 Save & Apply Plan";
+  }
+};
+
+$("btnResetAiPlan").onclick = async () => {
+  if (!currentUser) return;
+  if (!confirm("Revert back to the standard 14-day rotational veg fat loss plan and default timings?")) return;
+
+  const btn = $("btnResetAiPlan");
+  btn.disabled = true;
+  btn.textContent = "Reverting...";
+
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await updateDoc(userRef, { customPlan: null });
+    S.customPlan = null;
+    render();
+    closeAiCustomizer();
+    alert("🔄 Reverted back to the default 14-day rotational plan.");
+  } catch (err) {
+    console.error("Error resetting plan:", err);
+    alert("Failed to reset plan: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔄 Revert to Default Plan";
+  }
+};
+
 // Theme toggle
 $("btnThemeToggle").onclick = () => {
   const current = document.documentElement.getAttribute("data-theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -1458,7 +2088,8 @@ onAuthStateChanged(auth, async (user) => {
         start: userDocData.startDate || iso(new Date()),
         done: userDocData.done || {},
         water: userDocData.water || {},
-        wts: userDocData.wts || []
+        wts: userDocData.wts || [],
+        customPlan: userDocData.customPlan || null
       };
       cur = today();
       render();

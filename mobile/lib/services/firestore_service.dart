@@ -64,6 +64,13 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateCustomPlan({
+    required String uid,
+    required Map<String, dynamic> customPlanMap,
+  }) async {
+    await _usersRef.doc(uid).update({'customPlan': customPlanMap});
+  }
+
   /// Option 1: Keep Account & Clear All Data (Reset Start Date)
   Future<void> resetPlanDataAndStartDate({
     required String uid,

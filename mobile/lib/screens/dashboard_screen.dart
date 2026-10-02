@@ -4,6 +4,7 @@ import '../models/user_plan.dart';
 import '../models/plan_data.dart';
 import '../services/firestore_service.dart';
 import 'profile_dialog.dart';
+import 'ai_customizer_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   final UserPlan userPlan;
@@ -86,12 +87,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showAiCustomizer() {
+    showDialog(
+      context: context,
+      builder: (context) => AiCustomizerDialog(userPlan: widget.userPlan),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final plan = widget.userPlan;
-    final schedule = PlanData.buildSchedule(_selectedDay, plan.startDateTime);
+    final schedule = PlanData.buildSchedule(
+      _selectedDay,
+      plan.startDateTime,
+      customPlan: plan.customPlan,
+    );
     final currentDayDate = PlanData.getDateForDay(_selectedDay, plan.startDateTime);
     final weekNum = ((_selectedDay - 1) ~/ 7) + 1;
     final phaseName = PlanData.phases[(weekNum - 1).clamp(0, PlanData.phases.length - 1)];
@@ -134,29 +146,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          // Cloud Synced Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF238B55).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done, size: 14, color: Color(0xFF238B55)),
-                SizedBox(width: 4),
-                Text(
-                  "Synced",
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF238B55),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+          // AI Customizer Button
+          IconButton(
+            tooltip: "✨ AI Diet & Routine Customizer",
+            onPressed: _showAiCustomizer,
+            icon: const Icon(Icons.auto_awesome, color: Color(0xFF238B55), size: 21),
           ),
           // Notification Nudges Button
           IconButton(
