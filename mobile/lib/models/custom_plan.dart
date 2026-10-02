@@ -100,25 +100,32 @@ class CustomPlan {
     final prefsMap = map['preferences'] as Map<String, dynamic>?;
     final prefs = PlanPreferences.fromMap(prefsMap);
 
-    final rawPlanA = map['planA'] as List<dynamic>?;
-    final parsedPlanA = <List<String>>[];
-    if (rawPlanA != null) {
-      for (final day in rawPlanA) {
-        if (day is List) {
-          parsedPlanA.add(day.map((e) => e.toString()).toList());
+    List<List<String>> parsePlanList(dynamic raw) {
+      final parsed = <List<String>>[];
+      if (raw is List) {
+        for (final item in raw) {
+          if (item is Map && item.containsKey('meals') && item['meals'] is List) {
+            parsed.add((item['meals'] as List).map((e) => e.toString()).toList());
+          } else if (item is List) {
+            parsed.add(item.map((e) => e.toString()).toList());
+          }
+        }
+      } else if (raw is Map) {
+        final sortedKeys = raw.keys.toList()..sort();
+        for (final k in sortedKeys) {
+          final val = raw[k];
+          if (val is List) {
+            parsed.add(val.map((e) => e.toString()).toList());
+          } else if (val is Map && val.containsKey('meals') && val['meals'] is List) {
+            parsed.add((val['meals'] as List).map((e) => e.toString()).toList());
+          }
         }
       }
+      return parsed;
     }
 
-    final rawPlanB = map['planB'] as List<dynamic>?;
-    final parsedPlanB = <List<String>>[];
-    if (rawPlanB != null) {
-      for (final day in rawPlanB) {
-        if (day is List) {
-          parsedPlanB.add(day.map((e) => e.toString()).toList());
-        }
-      }
-    }
+    final parsedPlanA = parsePlanList(map['planA']);
+    final parsedPlanB = parsePlanList(map['planB']);
 
     return CustomPlan(
       preferences: prefs,
@@ -131,8 +138,8 @@ class CustomPlan {
   Map<String, dynamic> toMap() {
     return {
       'preferences': preferences.toMap(),
-      'planA': planA,
-      'planB': planB,
+      'planA': planA.map((day) => {'meals': day}).toList(),
+      'planB': planB.map((day) => {'meals': day}).toList(),
       'generatedAt': generatedAt,
     };
   }

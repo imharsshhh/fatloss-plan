@@ -1435,10 +1435,55 @@ function synthesizeAiPlan(prefs) {
   };
 }
 
+// Convert 2D arrays to Firestore-safe array of objects to avoid nested array rejection
+function formatCustomPlanForFirestore(plan) {
+  if (!plan) return null;
+  return {
+    preferences: plan.preferences || DEFAULT_PLAN_PREFERENCES,
+    planA: (plan.planA || []).map(day => ({ meals: Array.isArray(day) ? day : (day.meals || []) })),
+    planB: (plan.planB || []).map(day => ({ meals: Array.isArray(day) ? day : (day.meals || []) })),
+    generatedAt: plan.generatedAt || new Date().toISOString()
+  };
+}
+
+// Parse custom plan from Firestore (supports both {meals: [...]} and raw array structures)
+function parseCustomPlanFromFirestore(rawPlan) {
+  if (!rawPlan) return null;
+  const parseList = raw => {
+    if (!raw) return null;
+    if (Array.isArray(raw)) {
+      return raw.map(item => {
+        if (item && item.meals && Array.isArray(item.meals)) return item.meals;
+        if (Array.isArray(item)) return item;
+        return [];
+      });
+    } else if (typeof raw === 'object') {
+      const keys = Object.keys(raw).sort();
+      return keys.map(k => {
+        const item = raw[k];
+        if (item && item.meals && Array.isArray(item.meals)) return item.meals;
+        if (Array.isArray(item)) return item;
+        return [];
+      });
+    }
+    return null;
+  };
+
+  const parsedA = parseList(rawPlan.planA);
+  const parsedB = parseList(rawPlan.planB);
+
+  return {
+    preferences: rawPlan.preferences || DEFAULT_PLAN_PREFERENCES,
+    planA: (parsedA && parsedA.length) ? parsedA : A,
+    planB: (parsedB && parsedB.length) ? parsedB : B,
+    generatedAt: rawPlan.generatedAt || new Date().toISOString()
+  };
+}
+
 // Build Dynamic Daily Schedule relative to wakeUpTime and bedTime
 function build(n) {
   const d = dateOf(n), wd = d.getDay(), w = Math.ceil(n / 7), mi = (wd + 6) % 7, wk = wd > 0 && wd < 6, sat = wd === 6;
-  const customPlan = S.customPlan || (userDocData && userDocData.customPlan);
+  const customPlan = S.customPlan || parseCustomPlanFromFirestore(userDocData && userDocData.customPlan);
   const planSourceA = (customPlan && customPlan.planA) || A;
   const planSourceB = (customPlan && customPlan.planB) || B;
   const M = (w % 2 ? planSourceA : planSourceB)[mi % 7];
@@ -1880,7 +1925,7 @@ function renderChips(containerId, options, selectedValues, isSingle = false) {
 }
 
 function openAiCustomizer() {
-  const activePlan = S.customPlan || (userDocData && userDocData.customPlan);
+  const activePlan = S.customPlan || parseCustomPlanFromFirestore(userDocData && userDocData.customPlan);
   currentPrefs = activePlan && activePlan.preferences 
     ? JSON.parse(JSON.stringify(activePlan.preferences)) 
     : JSON.parse(JSON.stringify(DEFAULT_PLAN_PREFERENCES));
@@ -2001,7 +2046,8 @@ $("btnSaveAiPlan").onclick = async () => {
 
   try {
     const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, { customPlan: pendingCustomPlan });
+    const firestorePlan = formatCustomPlanForFirestore(pendingCustomPlan);
+    await updateDoc(userRef, { customPlan: firestorePlan });
     S.customPlan = pendingCustomPlan;
     render();
     closeAiCustomizer();
@@ -2089,7 +2135,7 @@ onAuthStateChanged(auth, async (user) => {
         done: userDocData.done || {},
         water: userDocData.water || {},
         wts: userDocData.wts || [],
-        customPlan: userDocData.customPlan || null
+        customPlan: parseCustomPlanFromFirestore(userDocData.customPlan)
       };
       cur = today();
       render();
